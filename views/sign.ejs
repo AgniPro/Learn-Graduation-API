@@ -1,0 +1,16 @@
+<%- include("partials/header"); -%>
+
+<h1>Sign in as Admin</h1>
+
+<form action="/sign" method="post">
+    <div class="form-group">
+        <label for="postTitle">User Id</label>
+        <input class="form-control" type="text" name="userId" placeholder="Enter your User Id">
+        <label for="postBody">Password</label>
+        <input type="text" class="form-control" name="password" placeholder="Enter your Password">
+    </div>
+
+    <button class=" btn btn-primary" type="submit" name="button">Sign In</button>
+</form>
+
+<%- include("partials/footer"); -%>
