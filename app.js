@@ -232,6 +232,7 @@ app.get("/posts/:postId", function (req, res) {
 });
 
 
-app.listen(port, () => {
-  console.log(`server is live ${port}`);
+app.listen(3000, function () {
+    console.log("server has started");
+
 });
