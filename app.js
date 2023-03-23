@@ -35,29 +35,41 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 
-
+mongoose.set('strictQuery', false);
 mongoose.connect("mongodb+srv://agnipro:agnipro%40@agnipro.absogmm.mongodb.net/learngraduation", {
     useNewUrlParser: true
 });
 
 const postSchema = {
-    _id: String,
+    purl:String,
     title: String,
+    disc: String,
     content: String
 }
 const Post = mongoose.model("Post", postSchema);
 
-
 app.get("/", function (req, res) {
-
-    Post.find({}, function (err, posts) {
-        res.render("home", {
-            startingContent: homeStartingContent,
-            posts: posts,
-        });
+    User.find({
+        "/": {
+            $ne: null
+        }
+    }, function (err, foundUser) {
+        if (err) {
+            console.log(err);
+        } else {
+            if (foundUser) {
+                Post.find({}, function (err, posts) {
+                    res.render("home", {
+                        startingContent: homeStartingContent,
+                        posts: posts,
+                    });
+                });
+            }
+        }
     });
 
 });
+
 app.get("/contact", function (req, res) {
     res.render("contact", {
         contactpg: contactContent
@@ -80,20 +92,9 @@ app.get("/register", function (req, res) {
 
 });
 
-app.get("/", function (req, res) {
-    User.find({"/":{$ne:null}}, function(err, foundUser){
-     if(err){
-         console.log(err);
-     }else{
-         if (foundUser){
-             res.render("/", {userslogin: foundUser})
-         }
-     }
-    });
- 
- });
- 
- app.get("/compose", function (req, res) {
+
+
+app.get("/compose", function (req, res) {
     if (req.isAuthenticated()) {
         res.render("compose");
     } else {
@@ -194,7 +195,12 @@ app.post("/login", function (req, res) {
 });
 
 app.post("/submit", function (req, res) {
-    const submittedSecret = req.body.secret;
+    const post = new Post({
+        purl:req.body.pUrl,
+        title: req.body.pTitle,
+        disc: req.body.pDisc,
+        content: req.body.pContent
+      });
 
     //Once the user is authenticated and their session gets saved, their user details are saved to req.user.
     // console.log(req.user.id);
@@ -204,10 +210,11 @@ app.post("/submit", function (req, res) {
             console.log(err);
         } else {
             if (foundUser) {
-                foundUser.secret = submittedSecret;
-                foundUser.save(function () {
-                    res.redirect("/");
-                });
+                post.save(function(err){
+                    if (!err){
+                        res.redirect("/");
+                    }
+                  });
             }
         }
     });
@@ -219,11 +226,13 @@ app.get("/posts/:postId", function (req, res) {
     const requestedPostId = req.params.postId;
 
     Post.findOne({
-        _id: requestedPostId
+        purl: requestedPostId
     }, function (err, post) {
         res.render("post", {
-            _id: post.purl,
+            
+            purl: post.purl,
             title: post.title,
+            disc: post.disc,
             content: post.content,
 
         });
