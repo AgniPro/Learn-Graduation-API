@@ -2740,8 +2740,6 @@ article.ntry {
 article.ntry.ps.post {
     box-shadow: none !important;
     border-radius: 0px;
-    width: 100%;
-    flex: 0 0 calc(100% - 20px);
 }
 
 .pCntn {
