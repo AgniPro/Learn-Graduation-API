@@ -6,12 +6,13 @@
 <% posts.forEach(function(post){ %>
 <div class="ntry">
     <div class="pCntn">
-    <a id="readmore" href="/posts/<%=post.purl%>">
+    <a  href="/posts/<%=post.purl%>">
             <h1 class="pTtl aTtl sml"> <%-post.title %> </h1>
+            </a>
         <p class="pSnpt">
              <%- post.disc.substring(0,100) + "..." %>
         </p>
-        </a>
+        <a  href="/posts/<%=post.purl%>">Read more.</a>
     </div>
 </div>
 <% }) %>
