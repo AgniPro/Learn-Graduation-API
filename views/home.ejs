@@ -4,7 +4,7 @@
 <p><%- startingContent  %></p>
 <a href="https://learngraduation.blogspot.com/">Learngraduation Old website</a>
 <% posts.forEach(function(post){ %>
-<div class="ntry">
+<article class="ntry">
     <div class="pCntn">
     <a  href="/posts/<%=post.purl%>">
             <h1 class="pTtl aTtl sml"> <%-post.title %> </h1>
@@ -14,7 +14,7 @@
         </p>
         <a  href="/posts/<%=post.purl%>">Read more.</a>
     </div>
-</div>
+</article>
 <% }) %>
 
 <%- include("partials/sidebar"); -%>
