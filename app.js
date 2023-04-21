@@ -36,7 +36,7 @@ app.use(passport.session());
 
 
 mongoose.set('strictQuery', false);
-mongoose.connect("mongodb+srv://agnipro:agnipro%40@agnipro.absogmm.mongodb.net/learngraduation", {
+mongoose.connect("mongodb://127.0.0.1:27017/learngraduation", {
     useNewUrlParser: true
 });
 
@@ -44,6 +44,7 @@ const postSchema = {
     purl:String,
     title: String,
     disc: String,
+    thumbnail:String,
     content: String
 }
 const Post = mongoose.model("Post", postSchema);
@@ -71,13 +72,13 @@ app.get("/", function (req, res) {
 });
 
 app.get("/contact", function (req, res) {
-    res.render("contact", {
+    res.render("pages/contact", {
         contactpg: contactContent
     });
 
 });
 app.get("/about", function (req, res) {
-    res.render("about", {
+    res.render("pages/about", {
         aboutpg: aboutContent
     });
 
@@ -199,6 +200,7 @@ app.post("/submit", function (req, res) {
         purl:req.body.pUrl,
         title: req.body.pTitle,
         disc: req.body.pDisc,
+        thumbnail:req.body.thumbnail,
         content: req.body.pContent
       });
 
@@ -221,18 +223,19 @@ app.post("/submit", function (req, res) {
 });
 
 
-app.get("/posts/:postId", function (req, res) {
+app.get("/posts/:postUrl", function (req, res) {
 
-    const requestedPostId = req.params.postId;
+    const requestedPostUrl = req.params.postUrl;
 
     Post.findOne({
-        purl: requestedPostId
+        purl: requestedPostUrl
     }, function (err, post) {
         res.render("post", {
             
             purl: post.purl,
             title: post.title,
             disc: post.disc,
+            thumbnail:post.thumbnail,
             content: post.content,
 
         });

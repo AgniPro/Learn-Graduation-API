@@ -1,0 +1,91 @@
+<div class="pCmnts" id="comment">
+    <input class="cmSh fixi hidden" id="forComments" type="checkbox">
+    <div class="cmShw">
+        <label class="cmBtn button ln" for="forComments">
+            Post a Comment
+        </label>
+    </div>
+    <section class="cm cmBr fixL" data-embed="true" data-num-comments="0" id="comments">
+        <div class="cmBri mty">
+            <div class="cmBrs fixLs">
+                <div class="cmH fixH">
+                    <h3 class="title">
+                        Post a Comment
+                    </h3>
+                    <div class="cmI cl">
+                        <label aria-label="Close" class="c" for="forComments"></label>
+                    </div>
+                </div>
+                <div class="cmC">
+                    <script>
+                        var comment = false;
+                    </script>
+                    <div class="cmFrm">
+                        <div id="commentForm">
+                            <a aria-label="Comment Form"
+                                href="https://www.blogger.com/comment/frame/6482790797019347133?po=5617172536820957755&amp;hl=en&amp;skin=contempo&amp;skin=contempo"
+                                id="comment-editor-src"></a>
+                            <iframe class="blogger-iframe-colorize blogger-comment-from-post lazy"
+                                data-src="https://www.blogger.com/comment/frame/6482790797019347133?po=5617172536820957755&amp;hl=en&amp;skin=contempo&amp;skin=contempo"
+                                height="296" id="comment-editor" name="comment-editor" title="Blogger comment"
+                                width="100"
+                                src="https://www.blogger.com/comment/frame/6482790797019347133?po=5617172536820957755&amp;hl=en&amp;skin=contempo&amp;skin=contempo"
+                                lazied=""></iframe>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <label class="fCls" for="forComments"></label>
+    </section>
+    <script>
+        /*<![CDATA[*/
+        document.addEventListener('DOMContentLoaded', function () {
+            var a = document,
+                b = a.getElementById('comment-editor'),
+                d = b.getAttribute('data-src');
+            if (b.setAttribute('src', d), 1 == comment) {
+                var f = a.getElementsByClassName('rpTo'),
+                    c = a.getElementById('commentForm'),
+                    h = f.length,
+                    k = function (b, d, e, f) {
+                        b.addEventListener('click', function () {
+                            var c = b.getAttribute(
+                                'data-reply-to');
+                            a.getElementById('c' + c)
+                                .appendChild(d);
+                            a.getElementById('commentForm')
+                                .className = 'cmRbox';
+                            a.getElementById('addCm')
+                                .className = 'cmAd';
+                            e.src = f + '&parentID=' + c
+                        })
+                    };
+                for (i = 0; i < h; i++) k(f[i], c, b, d);
+                var l = a.getElementsByClassName('cmFrm')[0];
+                a.getElementById('addCm').addEventListener('click',
+                    function () {
+                        l.appendChild(c);
+                        a.getElementById('commentForm')
+                            .className = 'cmRbox';
+                        a.getElementById('addCm').className =
+                            'cmAd hidden';
+                        b.src = d
+                    })
+            }
+        }); /*]]>*/
+    </script>
+    <script>
+        /*<![CDATA[*/ /* Comment tag, */
+        function repText(id) {
+            var a = document.getElementById(id);
+            if (!a) return;
+            var b = a.innerHTML;
+            b = b.replace(/<i rel="image">(.*?)<\/i>/ig,
+                "<img class='lazy' data-src='$1' src='data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=' alt='Image Comment' \/>"
+            );
+            a.innerHTML = b;
+        }
+        repText('cmHolder'); /*]]>*/
+    </script>
+</div>

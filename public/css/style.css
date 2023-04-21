@@ -1328,7 +1328,8 @@ footer {
     font-size: var(--postT);
     font-family: var(--fontBa);
     font-weight: 900;
-    line-height: 1.3em
+    line-height: 1.3em;
+    margin: auto;
 }
 
 .pTtl.itm.nSpr {
@@ -2740,6 +2741,9 @@ article.ntry {
 article.ntry.ps.post {
     box-shadow: none !important;
     border-radius: 0px;
+}
+main.blogItm.mainbar {
+    max-width: var(--pageW);
 }
 
 .pCntn {
