@@ -34,11 +34,11 @@ app.use(sesssion({
 app.use(passport.initialize());
 app.use(passport.session());
 
+
 mongoose.set('strictQuery', false);
 mongoose.connect("mongodb+srv://agnipro:agnipro7257278@agnipro.absogmm.mongodb.net/LearnGraduation", {
     useNewUrlParser: true
 });
-
 
 const postSchema = {
     purl:String,
