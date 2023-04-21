@@ -36,7 +36,7 @@ app.use(passport.session());
 
 
 mongoose.set('strictQuery', false);
-mongoose.connect("mongodb+srv://agnipro:agnipro7257278@agnipro.absogmm.mongodb.net/LearnGraduation/?retryWrites=true&w=majority", {
+mongoose.connect("mongodb+srv://agnipro:agnipro7257278@agnipro.absogmm.mongodb.net/LearnGraduation:?retryWrites=true&w=majority", {
     useNewUrlParser: true
 });
 
