@@ -35,7 +35,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 mongoose.set('strictQuery', false);
-mongoose.connect("${process.env.DBURI}", {
+mongoose.connect("mongodb+srv://agnipro:agnipro%40725@agnipro.absogmm.mongodb.net/LearnGraduation", {
     useNewUrlParser: true
 });
 
