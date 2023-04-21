@@ -34,11 +34,12 @@ app.use(sesssion({
 app.use(passport.initialize());
 app.use(passport.session());
 
-
-mongoose.set('strictQuery', false);
-mongoose.connect("mongodb://127.0.0.1:27017/learngraduation", {
-    useNewUrlParser: true
+const uri = process.env.DBURI;
+const client = new MongoClient(uri);
+client.connect(err => {
+    if(err){ console.error(err); return false;}
 });
+mongoose.set('strictQuery', false);
 
 const postSchema = {
     purl:String,
