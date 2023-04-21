@@ -4,7 +4,6 @@ require("dotenv").config();
 const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
-const { MongoClient } = require('mongodb');
 const mongoose = require("mongoose");
 const sesssion = require("express-session");
 const passport = require("passport");
@@ -35,12 +34,11 @@ app.use(sesssion({
 app.use(passport.initialize());
 app.use(passport.session());
 
-const uri = process.env.DBURI;
-const client = new MongoClient(uri);
-client.connect(err => {
-    if(err){ console.error(err); return false;}
-});
 mongoose.set('strictQuery', false);
+mongoose.connect("${process.env.DBURI}", {
+    useNewUrlParser: true
+});
+
 
 const postSchema = {
     purl:String,
