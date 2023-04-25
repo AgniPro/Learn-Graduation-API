@@ -5,6 +5,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
+const cookieParser = require('cookie-parser');
 const sesssion = require("express-session");
 const passport = require("passport");
 const passportLocalMongoose = require("passport-local-mongoose");
@@ -26,6 +27,8 @@ app.use(bodyParser.urlencoded({
     extended: true
 }));
 
+app.use(cookieParser());
+
 app.use(sesssion({
     secret: process.env.SECRET,
     resave: false,
@@ -40,7 +43,7 @@ app.use(passport.session());
 mongoose.set('strictQuery', false);
 
 // mongodb+srv://agnipro:agnipro7257278@agnipro.absogmm.mongodb.net/learngraduation    || mongodb://127.0.0.1:27017/learngraduation
-mongoose.connect("mongodb+srv://agnipro:agnipro7257278@agnipro.absogmm.mongodb.net/learngraduation", {
+mongoose.connect("mongodb://127.0.0.1:27017/learngraduation", {
     useNewUrlParser: true
 });
 
@@ -206,6 +209,25 @@ app.get("/dashboard",function(req,res){
     }
 });
 
+
+// update post content
+
+app.post("/update", function(req, res){
+    const  submittedPost = req.body.pContent;
+
+    Post.findById(req.user.id, function(err, foundUser){
+      if (err) {
+        console.log(err);
+      } else {
+        if (foundUser) {
+          foundUser.secret = submittedSecret;
+          foundUser.save(function(){
+            res.redirect("/secrets");
+          });
+        }
+      }
+    });
+  });
 
 
 app.get("/compose", function (req, res) {
