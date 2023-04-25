@@ -18,12 +18,13 @@ const aboutContent = "this is blog post templet designed by agnipro and the crea
 
 
 const app = express();
+
+app.use(express.static("public"));
 app.set('view engine', 'ejs');
 
 app.use(bodyParser.urlencoded({
     extended: true
 }));
-app.use(express.static("public"));
 
 app.use(sesssion({
     secret: process.env.SECRET,
@@ -34,10 +35,12 @@ app.use(sesssion({
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Connection to database
 
 mongoose.set('strictQuery', false);
-// mongodb+srv://agnipro:agnipro7257278@agnipro.absogmm.mongodb.net/LearnGraduation
-mongoose.connect("mongodb+srv://agnipro:agnipro7257278@agnipro.absogmm.mongodb.net/LearnGraduation", {
+
+// mongodb+srv://agnipro:agnipro7257278@agnipro.absogmm.mongodb.net/learngraduation    || mongodb://127.0.0.1:27017/learngraduation
+mongoose.connect("mongodb+srv://agnipro:agnipro7257278@agnipro.absogmm.mongodb.net/learngraduation", {
     useNewUrlParser: true
 });
 
@@ -48,62 +51,10 @@ const postSchema = {
     thumbnail:String,
     content: String
 }
+
 const Post = mongoose.model("Post", postSchema);
 
-app.get("/", function (req, res) {
-    User.find({
-        "/": {
-            $ne: null
-        }
-    }, function (err, foundUser) {
-        if (err) {
-            console.log(err);
-        } else {
-            if (foundUser) {
-                Post.find({}, function (err, posts) {
-                    res.render("home", {
-                        startingContent: homeStartingContent,
-                        posts: posts,
-                    });
-                });
-            }
-        }
-    });
-
-});
-
-app.get("/contact", function (req, res) {
-    res.render("pages/contact", {
-        contactpg: contactContent
-    });
-
-});
-app.get("/about", function (req, res) {
-    res.render("pages/about", {
-        aboutpg: aboutContent
-    });
-
-});
-
-app.get("/login", function (req, res) {
-    res.render("login");
-});
-
-app.get("/register", function (req, res) {
-    res.render("register");
-
-});
-
-
-
-app.get("/compose", function (req, res) {
-    if (req.isAuthenticated()) {
-        res.render("compose");
-    } else {
-        res.redirect("/login");
-    }
-
-});
+// Authentication section
 
 const userSchema = new mongoose.Schema({
     email: String,
@@ -164,6 +115,7 @@ app.get("/logout", function (req, res) {
 
 });
 
+
 app.post("/register", function (req, res) {
     User.register({
         username: req.body.username
@@ -188,12 +140,81 @@ app.post("/login", function (req, res) {
     req.login(user, function (err) {
         if (err) {
             console.log(err);
+            res.redirect("/login");
         } else {
             passport.authenticate("local")(req, res, function () {
                 res.redirect("/");
             });
         }
     });
+});
+
+
+// Main blog Routes
+
+app.get("/", function (req, res) {
+    User.find({
+        "/": {
+            $ne: null
+        }
+    }, function (err, foundUser) {
+        if (err) {
+            console.log(err);
+        } else {
+            if (foundUser) {
+                Post.find({}, function (err, posts) {
+                    res.render("home", {
+                        startingContent: homeStartingContent,
+                        posts: posts,
+                    });
+                });
+            }
+        }
+    });
+
+});
+
+app.get("/contact", function (req, res) {
+    res.render("pages/contact", {
+        contactpg: contactContent
+    });
+
+});
+app.get("/about", function (req, res) {
+    res.render("pages/about", {
+        aboutpg: aboutContent
+    });
+
+});
+
+app.get("/login", function (req, res) {
+    res.render("login");
+});
+
+app.get("/register", function (req, res) {
+    res.render("register");
+
+});
+
+// For admin users 
+
+app.get("/dashboard",function(req,res){
+    if (req.isAuthenticated()){
+        res.render("dashboard");
+    }else{
+        res.redirect("/login");
+    }
+});
+
+
+
+app.get("/compose", function (req, res) {
+    if (req.isAuthenticated()) {
+        res.render("compose");
+    } else {
+        res.redirect("/login");
+    }
+
 });
 
 app.post("/submit", function (req, res) {
@@ -205,24 +226,17 @@ app.post("/submit", function (req, res) {
         content: req.body.pContent
       });
 
-    //Once the user is authenticated and their session gets saved, their user details are saved to req.user.
-    // console.log(req.user.id);
-
-    User.findById(req.user.id, function (err, foundUser) {
-        if (err) {
-            console.log(err);
-        } else {
-            if (foundUser) {
-                post.save(function(err){
-                    if (!err){
-                        res.redirect("/");
-                    }
-                  });
+      if (req.isAuthenticated()){
+        post.save(function(err){
+            if (!err){
+                res.redirect("/");
             }
-        }
-    });
+          });
+    }else{
+        console.log("You are not a Admin");
+    }
+   
 });
-
 
 app.get("/posts/:postUrl", function (req, res) {
 
