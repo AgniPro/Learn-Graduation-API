@@ -2,11 +2,11 @@
 
 require("dotenv").config();
 const express = require("express");
+const sesssion = require("express-session");
+const cookieParser = require('cookie-parser');
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
-const cookieParser = require('cookie-parser');
-const sesssion = require("express-session");
 const passport = require("passport");
 const passportLocalMongoose = require("passport-local-mongoose");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
@@ -27,16 +27,17 @@ app.use(bodyParser.urlencoded({
     extended: true
 }));
 
-app.use(cookieParser());
-
 app.use(sesssion({
     secret: process.env.SECRET,
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: false,
+    cookie: { maxAge: 60 * 60 * 1000 } //1 hour
 }));
 
 app.use(passport.initialize());
 app.use(passport.session());
+
+app.use(cookieParser());
 
 // Connection to database
 
@@ -255,7 +256,7 @@ app.post("/submit", function (req, res) {
             }
           });
     }else{
-        console.log("You are not a Admin");
+        res.redirect("/login")
     }
    
 });
