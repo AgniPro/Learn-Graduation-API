@@ -43,8 +43,8 @@ app.use(cookieParser());
 
 mongoose.set('strictQuery', false);
 
-// mongodb+srv://agnipro:agnipro7257278@agnipro.absogmm.mongodb.net/learngraduation    || mongodb://127.0.0.1:27017/learngraduation
-mongoose.connect("mongodb+srv://agnipro:agnipro7257278@agnipro.absogmm.mongodb.net/learngraduation", {
+// mongodb+srv://"+ process.env.DBPAS +".absogmm.mongodb.net/learngraduation    || mongodb://127.0.0.1:27017/learngraduation
+mongoose.connect("mongodb+srv://"+ process.env.DBPAS +".absogmm.mongodb.net/learngraduation", {
     useNewUrlParser: true
 });
 
