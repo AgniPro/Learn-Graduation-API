@@ -265,7 +265,7 @@ body {
 
 /* Notif Section */
 .ntfC {
-    margin-bottom: 5px;
+    margin-bottom: 20px;
     border-radius: 28px;
     display: flex;
     align-items: center;
@@ -630,7 +630,7 @@ ul.headIc li {
 .blogCont .section:first-child,
 .blogCont footer .widget:not(:first-child),
 .blogCont .section.mobMn {
-    margin-top: 0
+    margin-top: 0;
 }
 
 .blogAd .section:not(.no-items) {
@@ -2741,9 +2741,6 @@ article.ntry {
 article.ntry.ps.post {
     box-shadow: none !important;
     border-radius: 0px;
-}
-main.blogItm.mainbar {
-    max-width: var(--pageW);
 }
 
 .pCntn {

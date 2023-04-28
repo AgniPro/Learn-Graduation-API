@@ -61,6 +61,62 @@ i think to link app page in one so the i make it dimimacly according to page con
                                                     <div class="pS post-body postBody" id="postBody">
 <!-- content here --> <a class="button" href="../compose" >create new post</a>
 <br><a class="button" href="../logout">Logout</a>
+
+<div class="widget Blog" data-version="2" id="Blog1">
+    <div class="blogTtl hm">
+        <h3 class="title">Latest Posts</h3>
+    </div>
+    <div class="blogPts">
+        <% posts.forEach(function(post){ %>
+        <article class="ntry">
+            <div class="pThmb">
+                <a class="thmb" href="/posts/<%-post.purl%>">
+                    <img alt="<%-post.title %>" class="imgThm lazy loaded"
+                        data-src="<%-post.thumbnail%>"
+                        src="<%-post.thumbnail%>"
+                        lazied="">
+                </a>
+            </div>
+            <div class="pCntn">
+                <div class="pHdr pSml">
+                    <div class="pLbls" data-text="in">
+                        <a aria-label="Bsc" data-text="Bsc"
+                            href="https://learngraduation.blogspot.com/search/label/Bsc"
+                            rel="tag">
+                        </a>
+                        <a aria-label="Mathematics" data-text="Mathematics"
+                            href="https://learngraduation.blogspot.com/search/label/Mathematics"
+                            rel="tag">
+                        </a>
+                    </div>
+                </div>
+                <h2 class="pTtl aTtl sml">
+                    <a data-text="<%-post.title %>" href="/posts/<%-post.purl%>"
+                        rel="bookmark">
+                        <%-post.title %>
+                    </a>
+                </h2>
+                <div class="pSnpt">
+                    <%- post.disc.substring(0,100) + "..." %>
+                </div>
+                <div class="pInf pSml">
+                    <time class="aTtmp pTtmp pbl" data-text="Apr 8, 2023"
+                        datetime="2023-04-08T09:50:00+05:30"
+                        title="Published: April 8, 2023"></time>
+                    <a aria-label="Read more" class="pJmp" data-text="Keep reading"
+                        href="/posts/<%-post.purl%>"></a>
+                </div>
+
+            </div>
+        </article>
+        <% }) %>
+
+    </div>
+    <div class="blogPg" id="blogPager"><a aria-label="Load more posts" class="jsLd"
+            data-text="Load more posts" href="javascript:;"></a></div>
+</div>
+
+
                                                     </div>
 
                                                 </div>

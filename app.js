@@ -31,7 +31,9 @@ app.use(sesssion({
     secret: process.env.SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 60 * 60 * 1000 } //1 hour
+    cookie: {
+        maxAge: 60 * 60 * 1000
+    } //1 hour
 }));
 
 app.use(passport.initialize());
@@ -49,11 +51,13 @@ mongoose.connect("mongodb+srv://"+ process.env.DBPAS +".absogmm.mongodb.net/lear
 });
 
 const postSchema = {
-    purl:String,
+    author: String,
+    purl: String,
     title: String,
     disc: String,
-    thumbnail:String,
-    content: String
+    thumbnail: String,
+    content: String,
+    pdate: String
 }
 
 const Post = mongoose.model("Post", postSchema);
@@ -105,7 +109,7 @@ app.get("/auth/google",
 
 app.get("/auth/google/compose",
     passport.authenticate("google", {
-        successRedirect: "/compose",
+        successRedirect: "/dashboard",
         failureRedirect: "/login"
     }));
 
@@ -157,24 +161,15 @@ app.post("/login", function (req, res) {
 // Main blog Routes
 
 app.get("/", function (req, res) {
-    User.find({
-        "/": {
-            $ne: null
-        }
-    }, function (err, foundUser) {
-        if (err) {
-            console.log(err);
-        } else {
-            if (foundUser) {
-                Post.find({}, function (err, posts) {
-                    res.render("home", {
-                        startingContent: homeStartingContent,
-                        posts: posts,
-                    });
-                });
-            }
-        }
-    });
+
+    Post.find({}, function (err, posts) {
+        res.render("home", {
+            startingContent: homeStartingContent,
+            posts: posts,
+        });
+    }).sort({
+        _id: -1
+    }).limit(6);
 
 });
 
@@ -200,12 +195,54 @@ app.get("/register", function (req, res) {
 
 });
 
+
+app.get("/search", function (req, res) {
+
+    const key = new RegExp(escapeRegex(req.query.q), 'gi');
+    Post.find({
+        title: key
+    }, function (err, articles) {
+        if (err) {
+            console.log(err);
+        } else {
+            if (articles.length < 1) {
+                res.redirect("/");
+            } else {
+                res.render("search", {
+                    articles: articles,
+                });
+            }
+        }
+    }).limit(6);
+
+});
+
+function escapeRegex(text) {
+    return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+};
+
 // For admin users 
 
-app.get("/dashboard",function(req,res){
-    if (req.isAuthenticated()){
-        res.render("dashboard");
-    }else{
+app.get("/dashboard", function (req, res) {
+    if (req.isAuthenticated()) {
+
+        const userid = req.user.username;
+
+        Post.find({
+            "post.userid": {
+                $exists: true
+            }
+        }, function (err, posts) {
+            res.render("dashboard", {
+                startingContent: homeStartingContent,
+                posts: posts,
+            });
+
+        }).sort({
+            _id: -1
+        }).limit(5);
+
+    } else {
         res.redirect("/login");
     }
 });
@@ -213,22 +250,24 @@ app.get("/dashboard",function(req,res){
 
 // update post content
 
-app.post("/update", function(req, res){
-    const  submittedPost = req.body.pContent;
-
-    Post.findById(req.user.id, function(err, foundUser){
-      if (err) {
-        console.log(err);
-      } else {
-        if (foundUser) {
-          foundUser.secret = submittedSecret;
-          foundUser.save(function(){
-            res.redirect("/secrets");
-          });
-        }
-      }
-    });
-  });
+app.post("/update", function (req, res) {
+    const submittedPost = req.body.pContent;
+    const purl= req.body.purl
+    Post.findOneAndUpdate(
+        { "purl" :purl },
+        { $inc: {
+        "purl": req.body.pUrl,
+        "title": req.body.pTitle,
+        "disc": req.body.pDisc,
+        "thumbnail": req.body.thumbnail,
+        "content": req.body.pContent,
+        "pdate": date()
+    
+    } }
+        )
+        
+   
+});
 
 
 app.get("/compose", function (req, res) {
@@ -240,25 +279,38 @@ app.get("/compose", function (req, res) {
 
 });
 
+function date() {
+    var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "July", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    var date = new Date();
+    var month = date.getMonth();
+    var tmonth = months[month];
+
+    return todayDate = date.getDate() + " " + tmonth + ", " + date.getFullYear();
+};
+
 app.post("/submit", function (req, res) {
+
     const post = new Post({
-        purl:req.body.pUrl,
+        author: req.user.username,
+        purl: req.body.pUrl,
         title: req.body.pTitle,
         disc: req.body.pDisc,
-        thumbnail:req.body.thumbnail,
-        content: req.body.pContent
-      });
+        thumbnail: req.body.thumbnail,
+        content: req.body.pContent,
+        pdate: date()
+    });
 
-      if (req.isAuthenticated()){
-        post.save(function(err){
-            if (!err){
+    if (req.isAuthenticated()) {
+        post.save(function (err) {
+            if (!err) {
                 res.redirect("/");
             }
-          });
-    }else{
+        });
+    } else {
         res.redirect("/login")
     }
-   
+
 });
 
 app.get("/posts/:postUrl", function (req, res) {
@@ -269,12 +321,13 @@ app.get("/posts/:postUrl", function (req, res) {
         purl: requestedPostUrl
     }, function (err, post) {
         res.render("post", {
-            
+
             purl: post.purl,
             title: post.title,
             disc: post.disc,
-            thumbnail:post.thumbnail,
+            thumbnail: post.thumbnail,
             content: post.content,
+            pdate: post.pdate
 
         });
     });
