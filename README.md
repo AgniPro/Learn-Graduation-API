@@ -27,7 +27,7 @@ Linkedin👉
 https://www.linkedin.com/in/agnipro/
 
 Dribbble👉
-https://dribbble.com/agniPro
+https://dribbble.com/agnipro
 ## Feedback
 
 If you have any feedback, please reach out to us at agniprotech@gmail.com
