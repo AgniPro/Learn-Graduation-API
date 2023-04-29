@@ -1,12 +1,10 @@
 //jshint esversion:6
-
 require("dotenv").config();
 const express = require("express");
-const sesssion = require("express-session");
-const cookieParser = require('cookie-parser');
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
+const sesssion = require("express-session");
 const passport = require("passport");
 const passportLocalMongoose = require("passport-local-mongoose");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
@@ -39,28 +37,12 @@ app.use(sesssion({
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.use(cookieParser());
-
 // Connection to database
 
 mongoose.set('strictQuery', false);
 
 // mongodb+srv://"+ process.env.DBPAS +".absogmm.mongodb.net/learngraduation    || mongodb://127.0.0.1:27017/learngraduation
-mongoose.connect("mongodb+srv://"+ process.env.DBPAS +".absogmm.mongodb.net/learngraduation", {
-    useNewUrlParser: true
-});
-
-const postSchema = {
-    author: String,
-    purl: String,
-    title: String,
-    disc: String,
-    thumbnail: String,
-    content: String,
-    pdate: String
-}
-
-const Post = mongoose.model("Post", postSchema);
+mongoose.connect("mongodb+srv://"+ process.env.DBPAS +".absogmm.mongodb.net/learngraduation");
 
 // Authentication section
 
@@ -68,7 +50,6 @@ const userSchema = new mongoose.Schema({
     email: String,
     password: String,
     googleId: String,
-    secret: String
 });
 
 userSchema.plugin(passportLocalMongoose);
@@ -99,19 +80,30 @@ passport.use(new GoogleStrategy({
         }, function (err, user) {
             return cb(err, user);
         });
-    }
-));
+    }));
 
 app.get("/auth/google",
     passport.authenticate("google", {
         scope: ["email", "profile"]
-    }));
+    })
+);
 
 app.get("/auth/google/compose",
     passport.authenticate("google", {
         successRedirect: "/dashboard",
         failureRedirect: "/login"
-    }));
+    })
+);
+
+app.get("/login", function (req, res) {
+    res.render("login");
+});
+
+app.get("/register", function (req, res) {
+    res.render("register");
+
+});
+
 
 app.get("/logout", function (req, res) {
     req.logout(function (err) {
@@ -160,6 +152,20 @@ app.post("/login", function (req, res) {
 
 // Main blog Routes
 
+const postSchema = {
+    author: String,
+    purl: String,
+    title: String,
+    disc: String,
+    thumbnail: String,
+    content: String,
+    pdate: String
+}
+
+const Post = mongoose.model("Post", postSchema);
+
+
+
 app.get("/", function (req, res) {
 
     Post.find({}, function (err, posts) {
@@ -183,15 +189,6 @@ app.get("/about", function (req, res) {
     res.render("pages/about", {
         aboutpg: aboutContent
     });
-
-});
-
-app.get("/login", function (req, res) {
-    res.render("login");
-});
-
-app.get("/register", function (req, res) {
-    res.render("register");
 
 });
 
@@ -226,21 +223,24 @@ function escapeRegex(text) {
 app.get("/dashboard", function (req, res) {
     if (req.isAuthenticated()) {
 
-        const userid = req.user.username;
-
-        Post.find({
-            "post.userid": {
-                $exists: true
+        const userid = new RegExp(escapeRegex(req.user.username), 'gi');
+        Post.find({ author:userid}, function(err,userPosts){
+            if(err){
+                console.log(err);
+            }else{
+                if (userPosts){
+                    if (userPosts <1) {
+                        res.render("dashboard",{
+                            userPosts: [{title: "you havent post  yet",purl:"",disc:"you are creater"}], userId:req.user.username
+                        });
+                    }else{
+                        res.render("dashboard", {userPosts: userPosts , userId:req.user.username});
+                    }
+                }
             }
-        }, function (err, posts) {
-            res.render("dashboard", {
-                startingContent: homeStartingContent,
-                posts: posts,
-            });
-
-        }).sort({
+           }).sort({
             _id: -1
-        }).limit(5);
+        }).limit(6);;
 
     } else {
         res.redirect("/login");
@@ -252,21 +252,22 @@ app.get("/dashboard", function (req, res) {
 
 app.post("/update", function (req, res) {
     const submittedPost = req.body.pContent;
-    const purl= req.body.purl
-    Post.findOneAndUpdate(
-        { "purl" :purl },
-        { $inc: {
-        "purl": req.body.pUrl,
-        "title": req.body.pTitle,
-        "disc": req.body.pDisc,
-        "thumbnail": req.body.thumbnail,
-        "content": req.body.pContent,
-        "pdate": date()
-    
-    } }
-        )
-        
-   
+    const purl = req.body.purl
+    Post.findOneAndUpdate({
+        "purl": purl
+    }, {
+        $inc: {
+            "purl": req.body.pUrl,
+            "title": req.body.pTitle,
+            "disc": req.body.pDisc,
+            "thumbnail": req.body.thumbnail,
+            "content": req.body.pContent,
+            "pdate": date()
+
+        }
+    })
+
+
 });
 
 
