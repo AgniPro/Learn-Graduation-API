@@ -152,7 +152,7 @@ app.post("/login", function (req, res) {
 
 // Main blog Routes
 
-const postSchema = {
+const postSchema = new mongoose.Schema({
     author: String,
     purl: String,
     title: String,
@@ -160,7 +160,7 @@ const postSchema = {
     thumbnail: String,
     content: String,
     pdate: String
-}
+});
 
 const Post = mongoose.model("Post", postSchema);
 
