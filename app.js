@@ -33,29 +33,12 @@ app.use(passport.session());
 mongoose.set('strictQuery', false);
 mongoose.connect("mongodb+srv://"+ process.env.DBPAS +".absogmm.mongodb.net/learngraduation");
 
-const userSchema = new mongoose.Schema({
-    username: {
-        type: String,
-        required: true,
-        unique: true,
-        min: 3,
-        max: 20
-    },
-    email: {
-        type: String,
-        required: true,
-        unique: true
-
-    },
-    password: {
-        type: String,
-        required: true,
-        min: 3,
-        max: 10
-    },
-    googleId: String
-
-},{timestamps: true});
+const userSchema = new mongoose.Schema ({
+    email: String,
+    password: String,
+    googleId: String,
+    secret: String
+  });
 
 userSchema.plugin(passportLocalMongoose);
 userSchema.plugin(findOrCreate);
