@@ -2,7 +2,6 @@
 require("dotenv").config();
 const express = require("express");
 const bodyParser = require("body-parser");
-const cookieParser = require('cookie-parser')
 const ejs = require("ejs");
 const mongoose = require("mongoose");
 const sesssion = require("express-session");
@@ -10,12 +9,6 @@ const passport = require("passport");
 const passportLocalMongoose = require("passport-local-mongoose");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const findOrCreate = require("mongoose-findorcreate");
-const _ = require("lodash");
-
-const homeStartingContent = "Application are under progress so please visit to learngraduation.blogspot.com or click on below link"
-const contactContent = "Contact us at agnipro(at)gmail(dot)com"
-const aboutContent = "this is blog post templet designed by agnipro and the creator is abhidhek mehta"
-
 
 const app = express();
 
@@ -25,58 +18,44 @@ app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({
     extended: true
 }));
-app.use(cookieParser());
 
 app.use(sesssion({
     secret: process.env.SECRET,
-    resave: true, // default to false
-    saveUninitialized: false,
-    cookie: {
-        maxAge: 60 * 60 * 1000
-    } //1 hour
+    resave: false,
+    saveUninitialized: false
 }));
 
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Connection to database
+
 
 mongoose.set('strictQuery', false);
-
-// mongodb+srv://"+ process.env.DBPAS +".absogmm.mongodb.net/learngraduation    || mongodb://127.0.0.1:27017/learngraduation
-mongoose.connect("mongodb+srv://" + process.env.DBPAS + ".absogmm.mongodb.net/learngraduation");
-
-// Authentication section
+mongoose.connect("mongodb+srv://"+ process.env.DBPAS +".absogmm.mongodb.net/learngraduation");
 
 const userSchema = new mongoose.Schema({
-        username: {
-            type: String,
-            required: true,
-            unique: true,
-            min: 3,
-            max: 20
-        },
-        email: {
-            type: String,
-            required: true,
-            unique: true
-
-        },
-        password: {
-            type: String,
-            required: true,
-            min: 3,
-            max: 10
-        },
-        googleId: String
+    username: {
+        type: String,
+        required: true,
+        unique: true,
+        min: 3,
+        max: 20
+    },
+    email: {
+        type: String,
+        required: true,
+        unique: true
 
     },
+    password: {
+        type: String,
+        required: true,
+        min: 3,
+        max: 10
+    },
+    googleId: String
 
-    {
-        timestamps: true
-    }
-
-);
+},{timestamps: true});
 
 userSchema.plugin(passportLocalMongoose);
 userSchema.plugin(findOrCreate);
@@ -94,10 +73,11 @@ passport.deserializeUser(function (id, done) {
     });
 });
 
+
 passport.use(new GoogleStrategy({
         clientID: process.env.CLIENT_ID,
         clientSecret: process.env.CLIENT_SECRET,
-        callbackURL: process.env.CALLBACK_URL,
+        callbackURL: "http://localhost:3000/auth/google/secrets",
         passReqToCallback: true
     },
     function (request, accessToken, refreshToken, profile, cb) {
@@ -106,20 +86,23 @@ passport.use(new GoogleStrategy({
         }, function (err, user) {
             return cb(err, user);
         });
-    }));
+    }
+));
+
+app.get("/", function (req, res) {
+    res.render("home");
+});
 
 app.get("/auth/google",
     passport.authenticate("google", {
         scope: ["email", "profile"]
-    })
-);
+    }));
 
-app.get("/auth/google/compose",
+app.get("/auth/google/secrets",
     passport.authenticate("google", {
-        successRedirect: "/dashboard",
+        successRedirect: "/secrets",
         failureRedirect: "/login"
-    })
-);
+    }));
 
 app.get("/login", function (req, res) {
     res.render("login");
@@ -130,6 +113,27 @@ app.get("/register", function (req, res) {
 
 });
 
+app.get("/secrets", function (req, res) {
+   User.find({"secret":{$ne:null}}, function(err, foundUser){
+    if(err){
+        console.log(err);
+    }else{
+        if (foundUser){
+            res.render("secrets", {usersWithSecrets: foundUser})
+        }
+    }
+   });
+
+});
+
+app.get("/submit", function (req, res) {
+    if (req.isAuthenticated()) {
+        res.render("submit");
+    } else {
+        res.redirect("/login");
+    }
+
+});
 
 app.get("/logout", function (req, res) {
     req.logout(function (err) {
@@ -141,7 +145,6 @@ app.get("/logout", function (req, res) {
 
 });
 
-
 app.post("/register", function (req, res) {
     User.register({
         username: req.body.username
@@ -151,7 +154,7 @@ app.post("/register", function (req, res) {
             res.redirect("/register");
         } else {
             passport.authenticate("local")(req, res, function () {
-                res.redirect("/");
+                res.redirect("/secrets");
             })
         }
     })
@@ -166,222 +169,35 @@ app.post("/login", function (req, res) {
     req.login(user, function (err) {
         if (err) {
             console.log(err);
-            res.redirect("/login");
         } else {
             passport.authenticate("local")(req, res, function () {
-                res.redirect("/");
+                res.redirect("secrets");
             });
         }
     });
 });
 
-
-// Main blog Routes
-
-const PostSchema = new mongoose.Schema({
-    title: {
-        type: String,
-        required: true,
-    },
-    author: String,
-    purl: {
-        type: String,
-        required: true,
-    },
-    disc: String,
-    thumbnail: String,
-    content: String,
-    pdate: String,
-
-}, {
-    timestamps: true
-});
-
-const Post = new mongoose.model("Post", PostSchema);
-
-
-
-app.get("/", function (req, res) {
-
-    Post.find({}, function (err, posts) {
-        res.render("home", {
-            startingContent: homeStartingContent,
-            posts: posts,
-        });
-    }).sort({
-        _id: -1
-    }).limit(6);
-
-});
-
-app.get("/contact", function (req, res) {
-    res.render("pages/contact", {
-        contactpg: contactContent
-    });
-
-});
-app.get("/about", function (req, res) {
-    res.render("pages/about", {
-        aboutpg: aboutContent
-    });
-
-});
-
-
-app.get("/search", function (req, res) {
-
-    const key = new RegExp(escapeRegex(req.query.q), 'gi');
-    Post.find({
-        title: key
-    }, function (err, articles) {
-        if (err) {
-            console.log(err);
-        } else {
-            if (articles.length < 1) {
-                res.redirect("/");
-            } else {
-                res.render("search", {
-                    articles: articles,
-                });
-            }
+app.post("/submit", function(req, res){
+    const  submittedSecret = req.body.secret;
+  
+  //Once the user is authenticated and their session gets saved, their user details are saved to req.user.
+    // console.log(req.user.id);
+  
+    User.findById(req.user.id, function(err, foundUser){
+      if (err) {
+        console.log(err);
+      } else {
+        if (foundUser) {
+          foundUser.secret = submittedSecret;
+          foundUser.save(function(){
+            res.redirect("/secrets");
+          });
         }
-    }).limit(6);
-
-});
-
-function escapeRegex(text) {
-    return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
-};
-
-// For admin users 
-
-app.get("/dashboard", function (req, res) {
-    if (req.isAuthenticated()) {
-
-        const userid = new RegExp(escapeRegex(req.user.username), 'gi');
-        Post.find({
-            author: userid
-        }, function (err, userPosts) {
-            if (err) {
-                console.log(err);
-            } else {
-                if (userPosts) {
-                    if (userPosts < 1) {
-                        res.render("dashboard", {
-                            userPosts: [{
-                                title: "you havent post  yet",
-                                purl: "",
-                                disc: "you are creater"
-                            }],
-                            userId: req.user.username
-                        });
-                    } else {
-                        res.render("dashboard", {
-                            userPosts: userPosts,
-                            userId: req.user.username
-                        });
-                    }
-                }
-            }
-        }).sort({
-            _id: -1
-        }).limit(6);;
-
-    } else {
-        res.redirect("/login");
-    }
-});
-
-
-// update post content
-
-app.post("/update", function (req, res) {
-    const submittedPost = req.body.pContent;
-    const purl = req.body.purl
-    Post.findOneAndUpdate({
-        "purl": purl
-    }, {
-        $inc: {
-            "purl": req.body.pUrl,
-            "title": req.body.pTitle,
-            "disc": req.body.pDisc,
-            "thumbnail": req.body.thumbnail,
-            "content": req.body.pContent,
-            "pdate": date()
-
-        }
-    })
-
-
-});
-
-
-app.get("/compose", function (req, res) {
-    if (req.isAuthenticated()) {
-        res.render("compose");
-    } else {
-        res.redirect("/login");
-    }
-
-});
-
-function date() {
-    var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "July", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-    var date = new Date();
-    var month = date.getMonth();
-    var tmonth = months[month];
-
-    return todayDate = date.getDate() + " " + tmonth + ", " + date.getFullYear();
-};
-
-app.post("/submit", function (req, res) {
-
-    const post = new Post({
-        author: req.user.username,
-        purl: req.body.pUrl,
-        title: req.body.pTitle,
-        disc: req.body.pDisc,
-        thumbnail: req.body.thumbnail,
-        content: req.body.pContent,
-        pdate: date()
+      }
     });
-
-    if (req.isAuthenticated()) {
-        post.save(function (err) {
-            if (!err) {
-                res.redirect("/");
-            }
-        });
-    } else {
-        res.redirect("/login")
-    }
-
-});
-
-app.get("/posts/:postUrl", function (req, res) {
-
-    const requestedPostUrl = req.params.postUrl;
-
-    Post.findOne({
-        purl: requestedPostUrl
-    }, function (err, post) {
-        res.render("post", {
-
-            purl: post.purl,
-            title: post.title,
-            disc: post.disc,
-            thumbnail: post.thumbnail,
-            content: post.content,
-            pdate: post.pdate
-
-        });
-    });
-
-});
-
+  });
 
 app.listen(3000, function () {
-    console.log("server has started");
+    console.log("server is started");
 
 });
