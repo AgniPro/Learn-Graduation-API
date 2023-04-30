@@ -2,6 +2,7 @@
 require("dotenv").config();
 const express = require("express");
 const bodyParser = require("body-parser");
+const cookieParser = require('cookie-parser')
 const ejs = require("ejs");
 const mongoose = require("mongoose");
 const sesssion = require("express-session");
@@ -24,10 +25,11 @@ app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({
     extended: true
 }));
+app.use(cookieParser());
 
 app.use(sesssion({
     secret: process.env.SECRET,
-    resave: false,
+    resave: true, // default to false
     saveUninitialized: false,
     cookie: {
         maxAge: 60 * 60 * 1000
@@ -42,15 +44,39 @@ app.use(passport.session());
 mongoose.set('strictQuery', false);
 
 // mongodb+srv://"+ process.env.DBPAS +".absogmm.mongodb.net/learngraduation    || mongodb://127.0.0.1:27017/learngraduation
-mongoose.connect("mongodb+srv://"+ process.env.DBPAS +".absogmm.mongodb.net/learngraduation");
+mongoose.connect("mongodb+srv://" + process.env.DBPAS + ".absogmm.mongodb.net/learngraduation");
 
 // Authentication section
 
 const userSchema = new mongoose.Schema({
-    email: String,
-    password: String,
-    googleId: String,
-});
+        username: {
+            type: String,
+            required: true,
+            unique: true,
+            min: 3,
+            max: 20
+        },
+        email: {
+            type: String,
+            required: true,
+            unique: true
+
+        },
+        password: {
+            type: String,
+            required: true,
+            min: 3,
+            max: 10
+        },
+        googleId: String
+
+    },
+
+    {
+        timestamps: true
+    }
+
+);
 
 userSchema.plugin(passportLocalMongoose);
 userSchema.plugin(findOrCreate);
@@ -152,17 +178,26 @@ app.post("/login", function (req, res) {
 
 // Main blog Routes
 
-const postSchema = new mongoose.Schema({
+const PostSchema = new mongoose.Schema({
+    title: {
+        type: String,
+        required: true,
+    },
     author: String,
-    purl: String,
-    title: String,
+    purl: {
+        type: String,
+        required: true,
+    },
     disc: String,
     thumbnail: String,
     content: String,
-    pdate: String
+    pdate: String,
+
+}, {
+    timestamps: true
 });
 
-const Post = new mongoose.model("Post", postSchema);
+const Post = new mongoose.model("Post", PostSchema);
 
 
 
@@ -224,21 +259,31 @@ app.get("/dashboard", function (req, res) {
     if (req.isAuthenticated()) {
 
         const userid = new RegExp(escapeRegex(req.user.username), 'gi');
-        Post.find({ author:userid}, function(err,userPosts){
-            if(err){
+        Post.find({
+            author: userid
+        }, function (err, userPosts) {
+            if (err) {
                 console.log(err);
-            }else{
-                if (userPosts){
-                    if (userPosts <1) {
-                        res.render("dashboard",{
-                            userPosts: [{title: "you havent post  yet",purl:"",disc:"you are creater"}], userId:req.user.username
+            } else {
+                if (userPosts) {
+                    if (userPosts < 1) {
+                        res.render("dashboard", {
+                            userPosts: [{
+                                title: "you havent post  yet",
+                                purl: "",
+                                disc: "you are creater"
+                            }],
+                            userId: req.user.username
                         });
-                    }else{
-                        res.render("dashboard", {userPosts: userPosts , userId:req.user.username});
+                    } else {
+                        res.render("dashboard", {
+                            userPosts: userPosts,
+                            userId: req.user.username
+                        });
                     }
                 }
             }
-           }).sort({
+        }).sort({
             _id: -1
         }).limit(6);;
 
