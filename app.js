@@ -42,7 +42,7 @@ app.use(passport.session());
 mongoose.set('strictQuery', false);
 
 // mongodb+srv://"+ process.env.DBPAS +".absogmm.mongodb.net/learngraduation    || mongodb://127.0.0.1:27017/learngraduation
-mongoose.connect("mongodb://127.0.0.1:27017/learngraduation");
+mongoose.connect("mongodb+srv://"+ process.env.DBPAS +".absogmm.mongodb.net/learngraduation");
 
 // Authentication section
 
