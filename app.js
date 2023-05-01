@@ -217,6 +217,56 @@ if (req.isAuthenticated()) {
 
     });
 
+app.get("/update",function(req,res){
+    if (req.isAuthenticated()){
+        res.render("update");
+
+    }else {
+        res.redirect("/login")
+    }
+
+})    
+app.post("/update",function(req,res){
+    if (req.isAuthenticated()){
+        const secret = req.body.secret;
+        const postid = req.body.id;
+        
+        Post.findOneAndUpdate({"_id": postid}, {$set:{"secret": secret}}, {new: true}, (err, doc) => {
+        if (err) {
+            console.log("Something wrong when updating data!");
+        }else{
+            res.redirect("/secrets")
+        }
+        });
+    }else {
+    res.redirect("/login")
+}
+});    
+
+app.get("/delete", function(req,res){
+    if (req.isAuthenticated()){
+        res.render("delete");
+    } else{
+        res.redirect("/login")
+    }
+})
+app.post("/delete", function(req,res){
+    if (req.isAuthenticated()){
+        const postid = req.body.id;
+        
+        Post.findOneAndDelete({"_id": postid}, (err, doc) => {
+        if (err) {
+            console.log("Something wrong when updating data!");
+        }else{
+            res.redirect("/secrets")
+        }
+        });
+    }else {
+    res.redirect("/login")
+}
+
+});
+
 
 app.listen(3000, function () {
     console.log("server is started");
