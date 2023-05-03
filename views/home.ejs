@@ -9,9 +9,12 @@
     <hr>
     <a class="btn btn-light btn-lg" href="/register" role="button">Register</a>
     <a class="btn btn-dark btn-lg" href="/login" role="button">Login</a>
-    <% usersWithSecrets.forEach(function(uSecret){ %>
-    <h1><%- uSecret.secret %></h1>
-    <%  }) %>
+    <% posts.forEach(function(post){ %>
+    <h1><%- post.title %></h1>
+    <img src="<%- post.pimg %>" alt="<%- post.title %>">
+    <p><%- post.content %></p>
+    <a href="/p/<%- post.url %>">Read More.</a>
+    <%  }); %>
 
   </div>
 </div>

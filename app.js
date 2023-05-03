@@ -100,62 +100,6 @@ app.get("/register", function (req, res) {
 
 });
 
-// home functions
-const postSchema = new mongoose.Schema ({
-    userid:String,
-    secret: String,
-  },
-   {
-    timestamps: true
-});
-const Post = new mongoose.model("Post", postSchema);
-
-
-
-app.get("/", function (req, res) {
-    Post.find({}, function(err, foundUser){
-            res.render("home", {usersWithSecrets: foundUser});
-       }).sort({
-        _id: -1
-    }).limit(6);
-    
-});
-
-function escapeRegex(text) {
-    return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
-};
-app.get("/secrets", function (req, res) {
-   if (req.isAuthenticated()) {
-
-    const userid = new RegExp(escapeRegex(req.user.username), 'gi');
-    Post.find({"userid":userid}, function(err, foundUser){
-        if(err){
-            console.log(err);
-        }else{
-            if (foundUser){
-                res.render("secrets", {usersWithSecrets: foundUser})
-                
-            }
-        }
-       }).sort({
-        _id: -1
-    }).limit(6);
-
-
-} else {
-    res.redirect("/login");
-}
-
-});
-
-app.get("/submit", function (req, res) {
-    if (req.isAuthenticated()) {
-        res.render("submit");
-    } else {
-        res.redirect("/login");
-    }
-
-});
 
 app.get("/logout", function (req, res) {
     req.logout(function (err) {
@@ -199,11 +143,75 @@ app.post("/login", function (req, res) {
     });
 });
 
+// home functions
+
+const postSchema = new mongoose.Schema ({
+    username:String,
+    url:String,
+    title:String,
+    disc:String,
+    pimg:String,
+    content:String,
+  },
+   {
+    timestamps: true
+});
+const Post = new mongoose.model("Post", postSchema);
+
+
+
+app.get("/", function (req, res) {
+    Post.find({}, function(err, posts){
+            res.render("home", {posts: posts});
+       }).sort({
+        _id: -1
+    }).limit(6);
+    
+});
+
+app.get("/secrets", function (req, res) {
+   if (req.isAuthenticated()) {
+
+    const username = new RegExp(escapeRegex(req.user.username), 'gi');
+    Post.find({"username":username}, function(err, posts){
+        if(err){
+            console.log(err);
+        }else{
+            if (posts){
+                res.render("secrets", {posts: posts})
+                
+            }
+        }
+       }).sort({
+        _id: -1
+    }).limit(6);
+
+
+} else {
+    res.redirect("/login");
+}
+
+});
+
+app.get("/submit", function (req, res) {
+    if (req.isAuthenticated()) {
+        res.render("submit");
+    } else {
+        res.redirect("/login");
+    }
+
+});
+
+
 app.post("/submit", function(req, res){
-if (req.isAuthenticated()) {
+    if (req.isAuthenticated()) {
         const post = new Post({
-            userid: req.user.username,
-            secret : req.body.secret
+            username: req.user.username,
+            url:req.body.url,
+            title:req.body.title,
+            disc:req.body.disc,
+            pimg:req.body.pimg,
+            content:req.body.content,
 
         });
         post.save(function (err) {
@@ -225,13 +233,13 @@ app.get("/update",function(req,res){
         res.redirect("/login")
     }
 
-})    
+});    
 app.post("/update",function(req,res){
     if (req.isAuthenticated()){
-        const secret = req.body.secret;
-        const postid = req.body.id;
+        const content = req.body.content;
+        const url = req.body.url;
         
-        Post.findOneAndUpdate({"_id": postid}, {$set:{"secret": secret}}, {new: true}, (err, doc) => {
+        Post.findOneAndUpdate({"url": url}, {$set:{"content": content}}, {new: true}, (err, doc) => {
         if (err) {
             console.log("Something wrong when updating data!");
         }else{
@@ -249,7 +257,7 @@ app.get("/delete", function(req,res){
     } else{
         res.redirect("/login")
     }
-})
+});
 app.post("/delete", function(req,res){
     if (req.isAuthenticated()){
         const postid = req.body.id;
@@ -263,9 +271,45 @@ app.post("/delete", function(req,res){
         });
     }else {
     res.redirect("/login")
-}
+    }
+});
+
+
+app.get("/p/:postUrl", function (req, res) {
+
+    const reqPostUrl = req.params.postUrl;
+    Post.findOne({url: reqPostUrl}, function (err, post) {
+        const postdate = date(post.createdAt,post.updatedAt);
+        res.render("post", {
+            url: post.url,
+            title: post.title,
+            disc: post.disc,
+            pimg: post.pimg,
+            content: postdate
+
+        });
+    });
 
 });
+
+
+// some functions
+function escapeRegex(text) {
+    return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+};
+
+function date(pdate,udate) {
+    var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "July", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    if (pdate = udate) {
+        fdate= pdate; pubinfo= "publish :";
+    }else{
+        fdate=udate; pubinfo ="updated :"
+    }
+    var fdate ; var pubinfo ;
+    var date = new Date(fdate);
+    return date = pubinfo + " " + date.getDate() + "-" + months[date.getMonth()] + "-" + date.getFullYear();
+};
+
 
 
 app.listen(3000, function () {
