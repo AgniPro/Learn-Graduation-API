@@ -251,18 +251,12 @@ app.post("/update",function(req,res){
 }
 });    
 
-app.get("/delete", function(req,res){
-    if (req.isAuthenticated()){
-        res.render("delete");
-    } else{
-        res.redirect("/login")
-    }
-});
+
 app.post("/delete", function(req,res){
     if (req.isAuthenticated()){
         const postid = req.body.id;
-        
-        Post.findOneAndDelete({"_id": postid}, (err, doc) => {
+
+        Post.findOneAndDelete({"url": postid}, (err, doc) => {
         if (err) {
             console.log("Something wrong when updating data!");
         }else{
