@@ -227,19 +227,35 @@ app.post("/submit", function(req, res){
 
 app.get("/update",function(req,res){
     if (req.isAuthenticated()){
-        res.render("update");
+        const key = req.query.url;
+        Post.findOne({url: key}, function (err, post) {
+            const postdate = date(post.createdAt,post.updatedAt);
+            res.render("update", {
+                url: post.url,
+                title: post.title,
+                disc: post.disc,
+                pimg: post.pimg,
+                content: post.content,
+                date: postdate
+    
+            });
+        });
 
     }else {
         res.redirect("/login")
     }
 
-});    
+}); 
+
 app.post("/update",function(req,res){
     if (req.isAuthenticated()){
         const content = req.body.content;
+        const disc = req.body.disc;
+        const title=req.body.title;
+        const pimg=req.body.pimg;
         const url = req.body.url;
         
-        Post.findOneAndUpdate({"url": url}, {$set:{"content": content}}, {new: true}, (err, doc) => {
+        Post.findOneAndUpdate({"url": url}, {$set:{"content": content , "disc":disc , "title": title,"pimg": pimg }}, {new: true}, (err, doc) => {
         if (err) {
             console.log("Something wrong when updating data!");
         }else{
@@ -279,7 +295,8 @@ app.get("/p/:postUrl", function (req, res) {
             title: post.title,
             disc: post.disc,
             pimg: post.pimg,
-            content: postdate
+            content: post.content,
+            date: postdate
 
         });
     });

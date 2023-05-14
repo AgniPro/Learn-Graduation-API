@@ -9,15 +9,16 @@
     <form action="/update" method="POST">
 
       <div class="form-group">
-        <input type="text" class="form-control text-center" name="url" placeholder="URL">
-        <input type="text" class="form-control text-center" name="title" placeholder="Title">
-        <input type="text" class="form-control text-center" name="disc" placeholder="Discription">
-        <input type="text" class="form-control text-center" name="pimg" placeholder="Post Thumbnail">
-        <input type="text" class="form-control text-center" name="content" placeholder="Content">
+       <p><%-url %></p>
+        <input type="text"  name="url" value="<%- url %>" style="visibility: hidden;">
+        <input type="text" class="form-control text-center" name="title" value="<%- title %>" placeholder="Title">
+        <input type="text" class="form-control text-center" name="disc" value="<%- disc %>" placeholder="Discription">
+        <input type="text" class="form-control text-center" name="pimg" value="<%- pimg %>" placeholder="Post Thumbnail">
+        <input type="text" class="form-control text-center" name="content" value="<%- content %>" placeholder="Content">
+        <span><%- date %></span>
       </div>
       <button type="submit" class="btn btn-dark">Submit</button>
     </form>
-
 
   </div>
 </div>
