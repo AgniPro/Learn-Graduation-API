@@ -34,7 +34,7 @@ app.use(passport.session());
 
 
 mongoose.set('strictQuery', false);
-mongoose.connect("mongodb://127.0.0.1:27017/learngraduation");
+mongoose.connect("mongodb+srv://"+ process.env.DBPAS +".absogmm.mongodb.net/learngraduation");
 // mongodb+srv://"+ process.env.DBPAS +".absogmm.mongodb.net/learngraduation     mongodb://127.0.0.1:27017/learngraduation
 
 const userSchema = new mongoose.Schema ({
@@ -251,18 +251,12 @@ app.post("/update",function(req,res){
 }
 });    
 
-app.get("/delete", function(req,res){
-    if (req.isAuthenticated()){
-        res.render("delete");
-    } else{
-        res.redirect("/login")
-    }
-});
+
 app.post("/delete", function(req,res){
     if (req.isAuthenticated()){
-        const postid = req.body.id;
+        const postid = req.body.url;
         
-        Post.findOneAndDelete({"_id": postid}, (err, doc) => {
+        Post.findOneAndDelete({"url": postid}, (err, doc) => {
         if (err) {
             console.log("Something wrong when updating data!");
         }else{
