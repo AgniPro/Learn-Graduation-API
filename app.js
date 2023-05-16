@@ -270,7 +270,7 @@ app.post("/update",function(req,res){
 
 app.post("/delete", function(req,res){
     if (req.isAuthenticated()){
-        const postid = req.body.del;
+        const postid = req.body.url;
         
         Post.findOneAndDelete({"url": postid}, (err, doc) => {
         if (err) {
