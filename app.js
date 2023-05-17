@@ -310,6 +310,26 @@ app.get("/p/:postUrl", function (req, res) {
 
 });
 
+app.get("/search", function (req, res) {
+
+    const key = new RegExp(escapeRegex(req.query.q), 'gi');
+    Post.find({
+        title: key
+    }, function (err, articles) {
+        if (err) {
+            console.log(err);
+        } else {
+            if (articles.length < 1) {
+                res.redirect("/");
+            } else {
+                res.render("search", {
+                    articles: articles,
+                });
+            }
+        }
+    }).limit(6);
+
+});
 
 // some functions
 function escapeRegex(text) {
