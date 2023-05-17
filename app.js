@@ -318,7 +318,7 @@ function escapeRegex(text) {
 
 function date(pdate,udate) {
     var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "July", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    if (pdate = udate) {
+    if (pdate.toString() === udate.toString()) {
         fdate= pdate; pubinfo= "publish :";
     }else{
         fdate=udate; pubinfo ="updated :"
