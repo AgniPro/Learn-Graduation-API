@@ -162,13 +162,19 @@ const Post = new mongoose.model("Post", postSchema);
 
 app.get("/", function (req, res) {
     Post.find({}, function(err, posts){
-            res.render("home", {posts: posts});
-       }).sort({
-        _id: -1
-    }).limit(6);
-    
-});
 
+        if (req.isAuthenticated()) {
+            res.render("home", {posts: posts , udetail : "Account" , ulink:"/secrets"});
+
+        } else {
+
+           res.render("home", {posts: posts , udetail : "Login" , ulink:"/login"});
+        }
+
+    }).sort({_id: -1}).limit(6);
+
+    
+ });
 app.get("/secrets", function (req, res) {
    if (req.isAuthenticated()) {
 
@@ -290,6 +296,7 @@ app.get("/p/:postUrl", function (req, res) {
     const reqPostUrl = req.params.postUrl;
     Post.findOne({url: reqPostUrl}, function (err, post) {
         const postdate = date(post.createdAt,post.updatedAt);
+        
         res.render("post", {
             url: post.url,
             title: post.title,
