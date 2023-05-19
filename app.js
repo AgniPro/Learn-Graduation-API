@@ -222,11 +222,11 @@ app.post("/submit", function(req, res){
         });
         post.save(function (err) {
             if (!err) {
-                res.redirect("/secrets");
+                res.sendStatus(200);
             }
         });
     } else {
-        res.redirect("/login")
+        res.status(500).send('An error occurred');
     }
 
     });
@@ -260,16 +260,15 @@ app.post("/update",function(req,res){
         const title=req.body.title;
         const pimg=req.body.pimg;
         const url = req.body.url;
-        
         Post.findOneAndUpdate({"url": url}, {$set:{"content": content , "disc":disc , "title": title,"pimg": pimg }}, {new: true}, (err, doc) => {
         if (err) {
             console.log("Something wrong when updating data!");
         }else{
-            res.redirect("/secrets")
+            res.sendStatus(200);
         }
         });
     }else {
-    res.redirect("/login")
+        res.status(500).send('An error occurred');
 }
 });    
 

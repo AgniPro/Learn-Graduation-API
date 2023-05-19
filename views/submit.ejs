@@ -3,22 +3,55 @@
 <div class="container">
   <div class="jumbotron centered">
     <i class="fas fa-key fa-6x"></i>
-    <h1 class="display-3">Secrets</h1>
-    <p class="secret-text">Don't keep your secrets, share them anonymously!</p>
-
-    <form action="/submit" method="POST">
-
-      <div class="form-group">
-        <input type="text" class="form-control text-center" name="url" placeholder="URL">
-        <input type="text" class="form-control text-center" name="title" placeholder="Title">
-        <input type="text" class="form-control text-center" name="disc" placeholder="Discription">
-        <input type="text" class="form-control text-center" name="pimg" placeholder="Post Thumbnail">
-        <input type="text" class="form-control text-center" name="content" placeholder="Content">
-      </div>
-      <button type="submit" class="btn btn-dark">Submit</button>
-    </form>
-
-
+    <h1 class="display-3">Make a New Post</h1>
+    <p class="secret-text">All field are Important</p>
+    <div class="form-group row">
+      <label for="url">URL:</label><br>
+      <input required class="form-control " type="text" id="url"><br><br>
+      <label for="title">Title:</label><br>
+      <input required class="form-control form-control-lg " type="text" id="title"><br><br>
+      <label for="disc">Disc:</label><br>
+      <input required class="form-control " type="text" id="disc"><br><br>
+      <label for="pimg">Thumbnail:</label><br>
+      <input required class="form-control" type="text" id="pimg"
+        value="https://1.bp.blogspot.com/-YurRRss-7Vs/YPF73EG4oqI/AAAAAAAACrY/EwlnBWaqUXEmxfhzm2hixuCV_edgZcYkQCPcBGAYYCw/s16000/learngraduation.png"><br><br>
+        <label for="editor">Content:</label><br>
+      <div class="form-control " contenteditable="true" id="editor"></div>
+      <button class="btn btn-dark" onclick="savePost()">Save Post</button>
+    </div>
   </div>
 </div>
 <%- include('partials/footer') %>
+
+<script>
+  function savePost() {
+    let postTitle = document.getElementById('title').value;
+    let postContent = document.getElementById('editor').innerText;
+    let url = document.getElementById("url").value;
+    let disc = document.getElementById("disc").value;
+    let pimg = document.getElementById("pimg").value;
+    fetch('/submit', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: new URLSearchParams({
+        url: url,
+        title: postTitle,
+        disc: disc,
+        pimg: pimg,
+        content: postContent
+      })
+    }).then(response => {
+      if (response.ok) {
+        window.location.href = '/secrets';
+      }
+    }).catch(error => {
+      alert("Somthing Went Wrong")
+      console.error(error);
+    });
+
+
+
+  }
+</script>

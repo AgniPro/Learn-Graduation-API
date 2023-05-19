@@ -14,3 +14,15 @@ body {
   color: #fff;
   background-color: #000;
 }
+
+#editor {
+
+    height: 50vh;
+    padding: 10px;
+    border: 1px solid #ccc;
+    font-family: monospace;
+    margin-bottom: 20px;
+}
+input:required:invalid {
+  border: 1px solid red;
+}
