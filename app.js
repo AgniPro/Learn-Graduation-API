@@ -92,11 +92,11 @@ app.get("/auth/google/secrets",
     }));
 
 app.get("/login", function (req, res) {
-    res.render("login");
+    res.render("login", { udetail : "Login" , ulink:"login"});
 });
 
 app.get("/register", function (req, res) {
-    res.render("register");
+    res.render("register",{ udetail : "Login" , ulink:"login"});
 
 });
 
@@ -120,7 +120,7 @@ app.post("/register", function (req, res) {
             res.redirect("/register");
         } else {
             passport.authenticate("local")(req, res, function () {
-                res.redirect("/secrets");
+                res.redirect("/dashboard");
             })
         }
     })
@@ -137,7 +137,7 @@ app.post("/login", function (req, res) {
             console.log(err);
         } else {
             passport.authenticate("local")(req, res, function () {
-                res.redirect("secrets");
+                res.redirect("dashboard");
             });
         }
     });
@@ -164,18 +164,18 @@ app.get("/", function (req, res) {
     Post.find({}, function(err, posts){
 
         if (req.isAuthenticated()) {
-            res.render("home", {posts: posts , udetail : "Account" , ulink:"/secrets"});
+            res.render("home", {posts: posts , udetail : "Dashboard" , ulink:"dashboard"});
 
         } else {
 
-           res.render("home", {posts: posts , udetail : "Login" , ulink:"/login"});
+           res.render("home", {posts: posts , udetail : "Login" , ulink:"login"});
         }
 
     }).sort({_id: -1}).limit(6);
 
     
  });
-app.get("/secrets", function (req, res) {
+app.get("/dashboard", function (req, res) {
    if (req.isAuthenticated()) {
 
     const username = new RegExp(escapeRegex(req.user.username), 'gi');
@@ -184,7 +184,7 @@ app.get("/secrets", function (req, res) {
             console.log(err);
         }else{
             if (posts){
-                res.render("secrets", {posts: posts})
+                res.render("dashboard", {posts: posts , userId:username , udetail : "Dashboard" , ulink:"dashboard"})
                 
             }
         }
@@ -199,9 +199,9 @@ app.get("/secrets", function (req, res) {
 
 });
 
-app.get("/submit", function (req, res) {
+app.get("/compose", function (req, res) {
     if (req.isAuthenticated()) {
-        res.render("submit");
+        res.render("compose" , { udetail : "Dashboard" , ulink:"dashboard"});
     } else {
         res.redirect("/login");
     }
@@ -242,7 +242,7 @@ app.get("/update",function(req,res){
                 disc: post.disc,
                 pimg: post.pimg,
                 content: post.content,
-                date: postdate
+                date: postdate, udetail : "Dashboard" , ulink:"dashboard"
     
             });
         });
@@ -281,7 +281,7 @@ app.post("/delete", function(req,res){
         if (err) {
             console.log("Something wrong when updating data!");
         }else{
-            res.redirect("/secrets")
+            res.redirect("/dashboard")
         }
         });
     }else {
@@ -302,7 +302,7 @@ app.get("/p/:postUrl", function (req, res) {
             disc: post.disc,
             pimg: post.pimg,
             content: post.content,
-            date: postdate
+            date: postdate, udetail : "Dashboard" , ulink:"dashboard"
 
         });
     });
@@ -322,7 +322,7 @@ app.get("/search", function (req, res) {
                 res.redirect("/");
             } else {
                 res.render("search", {
-                    articles: articles,
+                    articles: articles, udetail : "" , ulink:""
                 });
             }
         }

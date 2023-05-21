@@ -1,42 +1,173 @@
-<%- include('partials/header') %>
+<%- include("partials/htmltop"); -%>
 
-<div class="container mt-5">
-  <h1>Login</h1>
+<body class="MN-2 mobS hdMn bD onItm onPg" id="mainCont">
 
-  <div class="row">
-    <div class="col-sm-8">
-      <div class="card">
-        <div class="card-body">
+    <script>
+        (localStorage.getItem('mode')) === 'darkmode' ? document.querySelector('#mainCont').classList.add('drK'):
+            document.querySelector('#mainCont').classList.remove('drK')
+    </script>
 
-          <!-- Makes POST request to /login route -->
-          <form action="/login" method="POST">
-            <div class="form-group">
-              <label for="email">Email</label>
-              <input type="email" class="form-control" name="username">
+    <input class="prfI hidden" id="offPrf" type="checkbox">
+    <input class="navI hidden" id="offNav" type="checkbox">
+    <div class="mainWrp">
+
+        <%- include("partials/header"); -%>
+        <!--[ Content section ]-->
+        <div class="mainIn">
+            <!--[ Menu content ]-->
+            <%- include("partials/widget/mobilemenucontent"); -%>
+            <!--[ Blog content ]-->
+            <div class="blogCont">
+                <div class="secIn">
+
+                    <%- include("partials/widget/notifcation"); -%>
+
+                    <div class="blogAd">
+                        <div class="section" id="horizontal-ad">
+                            <div class="widget HTML" data-version="2" id="HTML91">
+                                <div class="adB" data-text="Ads go here"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="blogM">
+
+
+                        <main class="blogItm mainbar">
+                            <div class="section" id="main-widget">
+                                <div class="widget Blog" data-version="2" id="Blog1">
+                                    <div class="blogPts">
+                                        <article class="ntry ps post">
+                                            <div class="brdCmb" itemscope="itemscope"
+                                                itemtype="https://schema.org/BreadcrumbList">
+                                                <div class="hm" itemprop="itemListElement" itemscope="itemscope"
+                                                    itemtype="https://schema.org/ListItem">
+                                                    <a href="https://learngraduation.blogspot.com/"
+                                                        itemprop="item"><span itemprop="name">Home</span></a>
+                                                    <meta content="1" itemprop="position">
+                                                </div>
+                                                <div class="tl" data-text="login"></div>
+                                            </div>
+                                            <h1 class="pTtl aTtl sml itm">
+                                                <span>
+                                                    Login
+                                                </span>
+                                            </h1>
+                                            <div class="pInr">
+                                                <div class="pEnt">
+                                                    <div class="pS post-body postBody" id="postBody">
+                                                      <div class="container mt-5">
+                                                        <span></span>
+                                                        <h2>Login in as Admin</h2>
+                                                    <style>
+                                                      .form-group {
+                                                        margin-bottom: 1rem;
+                                                    }
+                                                    label {
+                                                        display: inline-block;
+                                                        margin-bottom: .5rem;
+                                                    }
+                                                    .form-control {
+                                                        display: block;
+                                                        width: 100%;
+                                                        padding: .375rem .75rem;
+                                                        font-size: 1rem;
+                                                        line-height: 1.5;
+                                                        color: #495057;
+                                                        background-color: #fff;
+                                                        background-clip: padding-box;
+                                                        border: 1px solid #ced4da;
+                                                        border-radius: .25rem;
+                                                        transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+                                                    }
+                                                    .btn-primary {
+                                                        color: #fff;
+                                                        background-color: #007bff;
+                                                        border-color: #007bff;
+                                                    }
+                                                    .btn {
+                                                        display: inline-block;
+                                                        font-weight: 400;
+                                                        text-align: center;
+                                                        white-space: nowrap;
+                                                        vertical-align: middle;
+                                                        -webkit-user-select: none;
+                                                        -moz-user-select: none;
+                                                        -ms-user-select: none;
+                                                        user-select: none;
+                                                        border: 1px solid transparent;
+                                                        padding: .375rem .75rem;
+                                                        font-size: 1rem;
+                                                        line-height: 1.5;
+                                                        border-radius: .25rem;
+                                                        transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+                                                    }
+                                                    
+                                                    </style>
+                                                        <div class="row">
+                                                          <div class="col-sm-8">
+                                                            <div class="card">
+                                                              <div class="card-body">
+                                                      
+                                                                
+                                                                <form action="/login" method="POST">
+                                                                  <div class="form-group">
+                                                                    <label for="email">Email</label>
+                                                                    <input type="email" class="form-control" name="username">
+                                                                  </div>
+                                                                  <div class="form-group">
+                                                                    <label for="password">Password</label>
+                                                                    <input type="password" class="form-control" name="password">
+                                                                  </div>
+                                                                  <button type="submit" class="btn btn-primary">Login</button>
+                                                                </form>
+                                                      
+                                                              </div>
+                                                            </div>
+                                                          </div>
+                                                      
+                                                          <div class="col-sm-4">
+                                                            <div class="card">
+                                                              <div class="card-body">
+                                                                <a class="btn btn-block" href="/auth/google" role="button">
+                                                                  <i class="fab fa-google"></i>
+                                                                  Sign In with Google
+                                                                </a>
+                                                              </div>
+                                                            </div>
+                                                          </div>
+                                                      <div class="col-sm-4">
+                                                        <p>If you dont have account then redister first</p>
+                                                        <a class="btn btn-primary" href="../register" >Register</a>
+                                                      </div>
+                                                        </div>
+                                                      </div>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                        </article>
+                                    </div>
+                                </div>
+                            </div>
+                        </main>
+                    </div>
+
+                    <%- include("partials/widget/mobilemenu"); -%>
+
+                    <%- include("partials/footer"); -%>
+                </div>
             </div>
-            <div class="form-group">
-              <label for="password">Password</label>
-              <input type="password" class="form-control" name="password">
-            </div>
-            <button type="submit" class="btn btn-dark">Login</button>
-          </form>
-
         </div>
-      </div>
     </div>
 
-    <div class="col-sm-4">
-      <div class="card">
-        <div class="card-body">
-          <a class="btn btn-block" href="/auth/google" role="button">
-            <i class="fab fa-google"></i>
-            Sign In with Google
-          </a>
-        </div>
-      </div>
-    </div>
+    <script src="../js/script.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('../sw.js');
+            });
+        }
+    </script>
+</body>
 
-  </div>
-</div>
-
-<%- include('partials/footer') %>
+</html>
