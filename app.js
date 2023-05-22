@@ -251,7 +251,7 @@ app.get("/update",function(req,res){
         res.redirect("/login")
     }
 
-}); 
+});
 
 app.post("/update",function(req,res){
     if (req.isAuthenticated()){
@@ -302,7 +302,7 @@ app.get("/p/:postUrl", function (req, res) {
             disc: post.disc,
             pimg: post.pimg,
             content: post.content,
-            date: postdate, udetail : "Dashboard" , ulink:"dashboard"
+            date: postdate, udetail : "" , ulink:""
 
         });
     });
