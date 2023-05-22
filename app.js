@@ -22,10 +22,10 @@ app.use(bodyParser.urlencoded({
 app.use(session({
     secret: process.env.SECRET,
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
     cookie: {
       maxAge: 60 * 60 * 1000,
-      secure: false // set to true if using HTTPS
+      secure: true // set to true if using HTTPS
     }
   }));
   
