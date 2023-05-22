@@ -24,10 +24,11 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        maxAge: 60 * 60 * 1000
-    },
-    cookie: { secure: false }
-}));
+      maxAge: 60 * 60 * 1000,
+      secure: true // set to true if using HTTPS
+    }
+  }));
+  
 
 app.use(passport.initialize());
 app.use(passport.session());
