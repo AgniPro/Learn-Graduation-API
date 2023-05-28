@@ -1,3 +1,4 @@
+
 //jshint esversion:6
 require("dotenv").config();
 const express = require("express");
@@ -67,7 +68,7 @@ passport.deserializeUser(function (id, done) {
 passport.use(new GoogleStrategy({
         clientID: process.env.CLIENT_ID,
         clientSecret: process.env.CLIENT_SECRET,
-        callbackURL: "http://localhost:3000/auth/google/secrets",
+        callbackURL: process.env.CALLBACK_URL,
         passReqToCallback: true
     },
     function (request, accessToken, refreshToken, profile, cb) {
@@ -331,7 +332,175 @@ app.get("/search", function (req, res) {
 
 });
 
+
+//  Api Section ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+app.post("/api/register", function (req, res) {
+    User.register({
+        username: req.body.username
+    }, req.body.password, function (err, user) {
+        if (err) {
+            console.log(err);
+            res.status(400).json(err);
+        } else {
+            passport.authenticate("local")(req, res, function () {
+                res.status(200).json("Registation succesful");
+            })
+        }
+    })
+
+});
+
+app.post("/api/login", function (req, res) {
+    const user = new User({
+        username: req.body.username,
+        password: req.body.password
+    });
+    req.login(user, function (err) {
+        if (err) {
+            res.status(400).json("Email id and password is incorrect");
+        } else {
+            passport.authenticate("local")(req, res, function () {
+                res.status(200).json("Login Succesfull");
+            });
+        }
+    });
+});
+
+// home functions
+
+app.get("/api", function (req, res) {
+    Post.find({}, function(err, posts){
+
+        if (req.isAuthenticated()) {
+            res.status(200).json(posts);
+
+        } else {
+
+            res.status(200).json(posts);
+        }
+
+    }).sort({_id: -1}).limit(6);
+
+    
+ });
+app.get("/api/dashboard", function (req, res) {
+   if (req.isAuthenticated()) {
+
+    const username = new RegExp(escapeRegex(req.user.username), 'gi');
+    Post.find({"username":username}, function(err, posts){
+        if(err){
+            res.status(500).json(err);
+        }else{
+            if (posts){
+                res.status(200).json(posts);
+                
+            }
+        }
+       }).sort({
+        _id: -1
+    }).limit(6);
+
+
+} else {
+    res.status(400).json("Login");
+}
+
+});
+
+
+app.post("/api/submit", function(req, res){
+    if (req.isAuthenticated()) {
+        const post = new Post({
+            username: req.user.username,
+            url:req.body.url,
+            title:req.body.title,
+            disc:req.body.disc,
+            pimg:req.body.pimg,
+            content:req.body.content,
+
+        });
+        post.save(function (err) {
+            if (!err) {
+                res.status(200).json("Succesfully Posted");
+            }
+        });
+    } else {
+        res.status(500).json('An error occurred');
+    }
+
+    });
+
+app.put("/api/update",function(req,res){
+    if (req.isAuthenticated()){
+        const content = req.body.content;
+        const disc = req.body.disc;
+        const title=req.body.title;
+        const pimg=req.body.pimg;
+        const url = req.body.url;
+        Post.findOneAndUpdate({"url": url}, {$set:{"content": content , "disc":disc , "title": title,"pimg": pimg }}, {new: true}, (err, doc) => {
+        if (err) {
+            res.status(400).json("Somthing Went Wrong");
+        }else{
+            res.status(200).json("Succesfully Updated");
+        }
+        });
+    }else {
+        res.status(400).json("Login");
+}
+});    
+
+
+app.delete("/api/:del", function(req,res){
+    if (req.isAuthenticated()){
+        const postid = req.params.del;
+
+        Post.findOneAndDelete({"url": postid}, (err, doc) => {
+        if (err) {
+            res.status(400).json("Somthing Went Wrong on Deleting");
+        }else{
+            res.status(200).json("Succesfully Deleted");
+        }
+        });
+    }else {
+        res.status(400).json("Login");
+    }
+});
+
+
+app.get("/api/p/:postUrl", function (req, res) {
+
+    const reqPostUrl = req.params.postUrl;
+    Post.findOne({url: reqPostUrl}, function (err, post) {
+        res.status(200).json(post);
+    });
+
+});
+
+app.get("/api/search", function (req, res) {
+
+    const key = new RegExp(escapeRegex(req.query.q), 'gi');
+    Post.find({
+        title: key
+    }, function (err, articles) {
+        if (err) {
+            res.status(400).json(err);
+        } else {
+            if (articles.length < 1) {
+                res.status(200).json("No Post Found");
+            } else {
+                res.status(200).json(articles);
+            }
+        }
+    }).limit(6);
+
+});
+
+// end of API Section  //////////////////////////////
+
 // some functions
+
 function escapeRegex(text) {
     return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
 };
@@ -347,7 +516,6 @@ function date(pdate,udate) {
     var date = new Date(fdate);
     return date = pubinfo + " " + date.getDate() + "-" + months[date.getMonth()] + "-" + date.getFullYear();
 };
-
 
 
 app.listen(3000, function () {

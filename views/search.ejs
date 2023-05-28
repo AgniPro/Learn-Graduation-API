@@ -1,0 +1,124 @@
+<!-- this page is not in used currently
+i think to link app page in one so the i make it dimimacly according to page content -->
+
+
+<%- include("partials/htmltop"); -%>
+
+<body class="oneGrd MN-2 mobS hdMn bD onIndx onMlt" id="mainCont">
+
+    <script>
+        (localStorage.getItem('mode')) === 'darkmode' ? document.querySelector('#mainCont').classList.add('drK'):
+            document.querySelector('#mainCont').classList.remove('drK')
+    </script>
+
+    <input class="prfI hidden" id="offPrf" type="checkbox">
+    <input class="navI hidden" id="offNav" type="checkbox">
+    <div class="mainWrp">
+
+        <%- include("partials/header"); -%>
+        <!--[ Content section ]-->
+        <div class="mainIn">
+            <!--[ Menu content ]-->
+            <%- include("partials/widget/mobilemenucontent"); -%>
+            <!--[ Blog content ]-->
+            <div class="blogCont">
+                <div class="secIn">
+
+                    <%- include("partials/widget/notifcation"); -%>
+
+                    <div class="blogAd">
+                        <div class="section" id="horizontal-ad">
+                            <div class="widget HTML" data-version="2" id="HTML91">
+                                <div class="adB" data-text="Ads go here"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="blogM">
+                        <!--[ Main content ]-->
+                        <main class="blogItm mainbar">
+                            <div class="section" id="main-widget">
+                                <div class="widget Blog" data-version="2" id="Blog1">
+                                    <div class="blogTtl">
+                                        <div class="t srch">
+                                            <span data-text="Search:"></span>linear
+                                        </div>
+                                    </div>
+                                    <div class="blogPts">
+                                        <% articles.forEach(function(post){ %>
+                                        <article class="ntry">
+                                            <div class="pThmb">
+                                                <a class="thmb" href="/p/<%- post.url %>">
+                                                    <img alt="<%-post.title %> " class="imgThm lazy loaded"
+                                                        data-src="<%- post.pimg %>" src="<%- post.pimg %>"
+                                                        lazied="">
+
+                                                </a>
+                                            </div>
+                                            <div class="pCntn">
+                                                <div class="pHdr pSml">
+                                                    <div class="pLbls" data-text="in">
+                                                        <a aria-label="Bsc" data-text="Bsc"
+                                                            href="https://learngraduation.blogspot.com/search/label/Bsc"
+                                                            rel="tag">
+                                                        </a>
+                                                        <a aria-label="Mathematics" data-text="Mathematics"
+                                                            href="https://learngraduation.blogspot.com/search/label/Mathematics"
+                                                            rel="tag">
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                                <h2 class="pTtl aTtl sml">
+                                                    <a data-text="<%-post.title %>" href="/p/<%- post.url %>"
+                                                        rel="bookmark">
+                                                        <%-post.title %>
+                                                    </a>
+                                                </h2>
+                                                <div class="pSnpt">
+                                                    <%- post.disc.substring(0,100) + "..." %>
+                                                </div>
+                                                <div class="pInf pSml">
+                                                    <time class="aTtmp pTtmp pbl" data-text="<%-post.pdate %>"
+                                                        datetime="<%-post.pdate %>"
+                                                        title="Published: <%-post.pdate %>"></time>
+                                                    <a aria-label="Read more" class="pJmp" data-text="Keep reading"
+                                                        href="/p/<%- post.url %>"></a>
+                                                </div>
+                                            </div>
+                                        </article>
+                                        <% }) %>
+                                    </div>
+                                    <div class="blogPg" id="blogPager"><a aria-label="Load more posts" class="jsLd"
+                                            data-text="Load more posts" href="javascript:;"></a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="section" id="add-widget">
+                                <div class="widget HTML" data-version="2" id="HTML94">
+                                    <div class="widget-content">
+                                        <div class="adB" data-text="Ads go here"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </main>
+                    </div>
+
+
+                    <%- include("partials/widget/mobilemenu"); -%>
+
+                    <%- include("partials/footer"); -%>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/script.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('../sw.js');
+            });
+        }
+    </script>
+</body>
+
+</html>
