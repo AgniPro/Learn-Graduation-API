@@ -149,6 +149,7 @@ app.post("/register", function (req, res) {
 });
 
 app.post("/login", async function (req, res) {
+    console.log(req.session.cookie)
   try {
     const requser = req.body.username;
     const fuser = await User.find({ username: requser });
