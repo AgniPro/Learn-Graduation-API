@@ -34,7 +34,7 @@ app.use(sesssion({
     maxAge: 60 * 60 * 1000,
     sameSite: 'none',
     secure: true,
-    domain: '.learngraduation.web.app'
+    domain: 'https://learngraduation.web.app'
   }
 }));
 
