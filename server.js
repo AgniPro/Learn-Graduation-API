@@ -33,7 +33,8 @@ app.use(sesssion({
   cookie: {
     maxAge: 60 * 60 * 1000,
     sameSite: 'none',
-    secure: true
+    secure: true,
+    domain: 'learngraduation.web.app'
   }
 }));
 
