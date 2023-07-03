@@ -182,6 +182,7 @@ app.post("/login", async function (req, res) {
                 });
             } else {
               req.session.user = { id: user._id, name: user.email };
+             res.cookie(`connect.ssid`,`encrypted cookie string Value`);
               res.send({ loggedIn: true, loginmsg: "Succesfully Login" });
             }
           });
