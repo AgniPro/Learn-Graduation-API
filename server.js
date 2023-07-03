@@ -36,7 +36,7 @@ app.use(session({
         maxAge: 60 * 60 * 1000,
         sameSite: 'none',
         secure: true,
-        domain:"learngraduation.onrender.com",
+        domain:'.onrender.com',
     } 
 }));
 
