@@ -4,6 +4,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
+const cookieParser = require("cookie-parser");
 const session = require("express-session");
 const passport = require("passport");
 const passportLocalMongoose = require("passport-local-mongoose");
@@ -27,6 +28,7 @@ app.use(bodyParser.urlencoded({
 }));
 
 app.use(session({
+    name: 'session',
     secret: process.env.SECRET,
     resave: false,
     saveUninitialized: false,
@@ -34,6 +36,7 @@ app.use(session({
         maxAge: 60 * 60 * 1000,
         sameSite: 'none',
         secure: true,
+        domain:"learngraduation.onrender.com",
     } 
 }));
 
@@ -109,7 +112,7 @@ app.get("/logout", function (req, res) {
         res
           .clearCookie("connect.sid", {
             sameSite: "none",
-            secure: true,
+            secure: true
           })
           .status(200)
           .json({authenticated: false,loginmsg:"User has been logged out."});
