@@ -26,7 +26,7 @@ app.use(bodyParser.urlencoded({
     extended: true
 }));
 
-app.use(sesssion({
+app.use(session({
   secret: process.env.SECRET,
   resave: false,
   saveUninitialized: false,
@@ -34,7 +34,7 @@ app.use(sesssion({
     maxAge: 60 * 60 * 1000,
     sameSite: 'none',
     secure: true,
-    domain: '.learngraduation.web'
+    domain: '.learngraduation.web.app'
   }
 }));
 
