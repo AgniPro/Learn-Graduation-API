@@ -27,17 +27,13 @@ app.use(bodyParser.urlencoded({
 }));
 
 app.use(session({
-  secret: process.env.SECRET,
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    maxAge: 60 * 60 * 1000,
-    sameSite: 'none',
-    secure: true,
-    domain: '.learngraduation.web.app'
-  }
+    secret: process.env.SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        maxAge: 60 * 60 * 1000
+    } //1 hour
 }));
-
 
 app.use(passport.initialize());
 app.use(passport.session());
@@ -46,7 +42,7 @@ app.use(passport.session());
 
 mongoose.set('strictQuery', false);
 mongoose.connect(process.env.DB_NAME);
-// process.env.DBPASS 
+// process.env.DBPAS
 
 const userSchema = new mongoose.Schema ({
     email: String,
@@ -149,7 +145,6 @@ app.post("/register", function (req, res) {
 });
 
 app.post("/login", async function (req, res) {
-    console.log(req.session.cookie)
   try {
     const requser = req.body.username;
     const fuser = await User.find({ username: requser });
@@ -182,7 +177,6 @@ app.post("/login", async function (req, res) {
                 });
             } else {
               req.session.user = { id: user._id, name: user.email };
-             res.cookie(`connect.ssid`,`encrypted cookie string Value`);
               res.send({ loggedIn: true, loginmsg: "Succesfully Login" });
             }
           });
