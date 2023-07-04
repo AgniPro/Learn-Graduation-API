@@ -4,24 +4,16 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
-const cookieParser = require("cookie-parser");
 const session = require("express-session");
 const passport = require("passport");
 const passportLocalMongoose = require("passport-local-mongoose");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const findOrCreate = require("mongoose-findorcreate");
+
 const app = express();
-
-
-const cors = require('cors');
-app.use(cors({ origin:process.env.CLIENTURL, 
-    credentials: true
-}));
 
 app.use(express.static("public"));
 app.set('view engine', 'ejs');
-
-app.use(express.json());
 
 app.use(bodyParser.urlencoded({
     extended: true
@@ -32,12 +24,10 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        maxAge: 60 * 60 * 1000,
-        sameSite: 'none',
-        secure: false,
-        domain:'.learngraduation.web.app',
-    } 
-}));
+      maxAge: 60 * 60 * 1000,
+    }
+  }));
+  
 
 app.use(passport.initialize());
 app.use(passport.session());
@@ -45,8 +35,8 @@ app.use(passport.session());
 
 
 mongoose.set('strictQuery', false);
-mongoose.connect(process.env.DB_NAME);
-// process.env.DBPAS
+mongoose.connect("mongodb+srv://"+ process.env.DBPAS +".absogmm.mongodb.net/learngraduation");
+// mongodb+srv://"+ process.env.DBPAS +".absogmm.mongodb.net/learngraduation     mongodb://127.0.0.1:27017/learngraduation
 
 const userSchema = new mongoose.Schema ({
     email: String,
@@ -90,6 +80,13 @@ passport.use(new GoogleStrategy({
 ));
 
 // auth section
+app.get('/check-auth', (req, res) => {
+  if (req.isAuthenticated()) {
+    res.send({ authenticated: true });
+  } else {
+    res.send({ authenticated: false });
+  }
+});
 
 app.get("/auth/google",
     passport.authenticate("google", {
@@ -98,110 +95,61 @@ app.get("/auth/google",
 
 app.get("/auth/google/secrets",
     passport.authenticate("google", {
-        successRedirect: process.env.CLIENTURL,
-        failureRedirect: process.env.CLIENTURL+"/login"
+        successRedirect: "/secrets",
+        failureRedirect: "/login"
     }));
+
+app.get("/login", function (req, res) {
+    res.render("login", { udetail : "Login" , ulink:"login"});
+});
+
+app.get("/register", function (req, res) {
+    res.render("register",{ udetail : "Login" , ulink:"login"});
+
+});
 
 
 app.get("/logout", function (req, res) {
     req.logout(function (err) {
         if (err) {
-          return next(err);
+            return next(err);
         }
-        res
-          .clearCookie("connect.sid", {
-            sameSite: "none",
-            secure: true
-          })
-          .status(200)
-          .json({authenticated: false,loginmsg:"User has been logged out."});
-      });
+        res.redirect('/');
+    });
 
 });
 
 app.post("/register", function (req, res) {
-    
-    User.find({ username: req.body.username }, function (err, user) {
+    User.register({
+        username: req.body.username
+    }, req.body.password, function (err, user) {
         if (err) {
-          console.log(err);
+            console.log(err);
+            res.redirect("/register");
         } else {
-          if (user.length) {
-            return res.status(409).json("User already exists!");
-          } else {
-            User.register(
-              {
-                username: req.body.username,
-              },
-              req.body.password,
-              function (err, user) {
-                if (err) {
-                  return res.status(500).json(err);
-                } else {
-                  passport.authenticate("local")(req, res, function () {
-                    return res.status(200).json("User has been created.");
-                  });
-                }
-              }
-            );
-          }
+            passport.authenticate("local")(req, res, function () {
+                res.redirect("/dashboard");
+            })
         }
-      });
+    })
+
 });
 
-app.post("/login", async function (req, res) {
-  try {
-    const requser = req.body.username;
-    const fuser = await User.find({ username: requser });
-    if (fuser.length === 0) {
-      return res.status(404).json("User not found!");
-    } else {
-      passport.authenticate("local", function (err, user, info) {
+app.post("/login", function (req, res) {
+    const user = new User({
+        username: req.body.username,
+        password: req.body.password
+    });
+    req.login(user, function (err) {
         if (err) {
-          res
-            .status(400)
-            .json({
-              loggedIn: false,
-              loginmsg: "something went wrong",
-            });
-        } else if (!user) {
-          res
-            .status(401)
-            .json({
-              loggedIn: false,
-              loginmsg: "Incorrect email or password",
-            });
+            console.log(err);
         } else {
-          req.logIn(user, function (err) {
-            if (err) {
-              res
-                .status(400)
-                .json({
-                  loggedIn: false,
-                  loginmsg: "Something went wrong",
-                });
-            } else {
-              req.session.user = { id: user._id, name: user.email };
-              res.send({ loggedIn: true, loginmsg: "Succesfully Login" });
-            }
-          });
+            passport.authenticate("local")(req, res, function () {
+                res.redirect("dashboard");
+            });
         }
-      })(req, res);
-    }
-  } catch (err) {
-    console.log(err);
-    res.status(500).send("An error occurred");
-  }
+    });
 });
-
-
-
-app.get('/check-auth', (req, res) => {
-    if (req.isAuthenticated()) {
-      res.send({ authenticated: true });
-    } else {
-      res.send({ authenticated: false });
-    }
-  });
 
 // home functions
 
@@ -220,41 +168,56 @@ const Post = new mongoose.model("Post", postSchema);
 
 
 
-app.get("/", function (req, res){
-    const skip= req.query.skip ? Number(req.query.skip) : 0;
-    
-    Post.find({}, function (err, post) {
-        res.status(200).json(post);
-    }).sort({
-        _id: -1
-    }).skip(skip).limit(2);
-        
- 
- });
+app.get("/", function (req, res) {
+    Post.find({}, function(err, posts){
 
+        if (req.isAuthenticated()) {
+            res.render("home", {posts: posts , udetail : "Dashboard" , ulink:"dashboard"});
+
+        } else {
+
+           res.render("home", {posts: posts , udetail : "Login" , ulink:"login"});
+        }
+
+    }).sort({_id: -1}).limit(6);
+
+    
+ });
 app.get("/dashboard", function (req, res) {
-  if (req.isAuthenticated()) {
-      const username = new RegExp(escapeRegex(req.user.username), 'gi');
-      Post.find({ "username": username }, function (err, posts) {
-          if (err) {
-              console.log(err);
-              res.status(500).json({ message: "An error occurred" });
-          } else {
-              if (posts.length === 0) {
-                  res.status(204).json({ message: "No posts found" });
-              } else {
-                  res.json(posts);
-              }
-          }
-      }).sort({
-          _id: -1
-      }).limit(6);
-  } else {
-      res.sendStatus(401);
-  }
+   if (req.isAuthenticated()) {
+
+    const username = new RegExp(escapeRegex(req.user.username), 'gi');
+    Post.find({"username":username}, function(err, posts){
+        if(err){
+            console.log(err);
+        }else{
+            if (posts){
+                res.render("dashboard", {posts: posts , userId:username , udetail : "Dashboard" , ulink:"dashboard"})
+                
+            }
+        }
+       }).sort({
+        _id: -1
+    }).limit(6);
+
+
+} else {
+    res.redirect("/login");
+}
+
 });
 
-app.post("/", function(req, res){
+app.get("/compose", function (req, res) {
+    if (req.isAuthenticated()) {
+        res.render("compose" , { udetail : "Dashboard" , ulink:"dashboard"});
+    } else {
+        res.redirect("/login");
+    }
+
+});
+
+
+app.post("/submit", function(req, res){
     if (req.isAuthenticated()) {
         const post = new Post({
             username: req.user.username,
@@ -267,48 +230,70 @@ app.post("/", function(req, res){
         });
         post.save(function (err) {
             if (!err) {
-                res.status(200).json("Post has been created.");
+                res.sendStatus(200);
             }
         });
     } else {
-        res.status(401).json("Not authenticated!");
+        res.status(500).send('An error occurred');
     }
 
     });
 
-app.put("/:postUrl",function(req,res){
-  const postid = req.params.postUrl;
+app.get("/update",function(req,res){
+    if (req.isAuthenticated()){
+        const key = req.query.url;
+        Post.findOne({url: key}, function (err, post) {
+            const postdate = date(post.createdAt,post.updatedAt);
+            res.render("update", {
+                url: post.url,
+                title: post.title,
+                disc: post.disc,
+                pimg: post.pimg,
+                content: post.content,
+                date: postdate, udetail : "Dashboard" , ulink:"dashboard"
+    
+            });
+        });
+
+    }else {
+        res.redirect("/login")
+    }
+
+});
+
+app.post("/update",function(req,res){
     if (req.isAuthenticated()){
         const content = req.body.content;
         const disc = req.body.disc;
         const title=req.body.title;
         const pimg=req.body.pimg;
-        Post.findOneAndUpdate({"url": postid}, {$set:{"content": content , "disc":disc , "title": title,"pimg": pimg }}, {new: true}, (err, doc) => {
+        const url = req.body.url;
+        Post.findOneAndUpdate({"url": url}, {$set:{"content": content , "disc":disc , "title": title,"pimg": pimg }}, {new: true}, (err, doc) => {
         if (err) {
-          res.status(501).json(err);
+            console.log("Something wrong when updating data!");
         }else{
-            res.status(200).json("Post has been updated.");
+            res.sendStatus(200);
         }
         });
     }else {
-        res.status(401).json("Not authenticated!");
+        res.status(500).send('An error occurred');
 }
 });    
 
 
-app.delete("/:postUrl", function(req,res){
+app.post("/delete", function(req,res){
     if (req.isAuthenticated()){
-        const postid = req.params.postUrl;
+        const postid = req.body.del;
         
         Post.findOneAndDelete({"url": postid}, (err, doc) => {
         if (err) {
-            console.log("Something when wrong!");
+            console.log("Something wrong when updating data!");
         }else{
-            res.status(200).json("Post has been deleted!");
+            res.redirect("/dashboard")
         }
         });
     }else {
-        res.status(401).json("Not authenticated!");
+    res.redirect("/login")
     }
 });
 
@@ -317,12 +302,19 @@ app.get("/p/:postUrl", function (req, res) {
 
     const reqPostUrl = req.params.postUrl;
     Post.findOne({url: reqPostUrl}, function (err, post) {
-        if (post== null) {
-            res.sendStatus(400);
-        }else{
-            res.status(200).send(post)
-        }
+        const postdate = date(post.createdAt,post.updatedAt);
+        
+        res.render("post", {
+            url: post.url,
+            title: post.title,
+            disc: post.disc,
+            pimg: post.pimg,
+            content: post.content,
+            date: postdate, udetail : "" , ulink:""
+
+        });
     });
+
 });
 
 app.get("/search", function (req, res) {
@@ -334,13 +326,184 @@ app.get("/search", function (req, res) {
         if (err) {
             console.log(err);
         } else {
-            res.send(articles);
+            if (articles.length < 1) {
+                res.redirect("/");
+            } else {
+                res.render("search", {
+                    articles: articles, udetail : "" , ulink:""
+                });
+            }
         }
     }).limit(6);
 
 });
 
+
+//  Api Section ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+app.post("/api/register", function (req, res) {
+    User.register({
+        username: req.body.username
+    }, req.body.password, function (err, user) {
+        if (err) {
+            console.log(err);
+            res.status(400).json(err);
+        } else {
+            passport.authenticate("local")(req, res, function () {
+                res.status(200).json("Registation succesful");
+            })
+        }
+    })
+
+});
+
+app.post("/api/login", function (req, res) {
+    const user = new User({
+        username: req.body.username,
+        password: req.body.password
+    });
+    req.login(user, function (err) {
+        if (err) {
+            res.status(400).json("Email id and password is incorrect");
+        } else {
+            passport.authenticate("local")(req, res, function () {
+                res.status(200).json("Login Succesfull");
+            });
+        }
+    });
+});
+
+// home functions
+
+ app.get("/api", function (req, res){
+  const skip= req.query.skip ? Number(req.query.skip) : 0;
+  
+  Post.find({}, function (err, post) {
+      res.status(200).json(post);
+  }).sort({
+      _id: -1
+  }).skip(skip).limit(2);
+      
+
+});
+
+app.get("/api/dashboard", function (req, res) {
+   if (req.isAuthenticated()) {
+
+    const username = new RegExp(escapeRegex(req.user.username), 'gi');
+    Post.find({"username":username}, function(err, posts){
+        if(err){
+            res.status(500).json(err);
+        }else{
+            if (posts){
+                res.status(200).json(posts);
+                
+            }
+        }
+       }).sort({
+        _id: -1
+    }).limit(6);
+
+
+} else {
+    res.status(400).json("Login");
+}
+
+});
+
+
+app.post("/api/submit", function(req, res){
+    if (req.isAuthenticated()) {
+        const post = new Post({
+            username: req.user.username,
+            url:req.body.url,
+            title:req.body.title,
+            disc:req.body.disc,
+            pimg:req.body.pimg,
+            content:req.body.content,
+
+        });
+        post.save(function (err) {
+            if (!err) {
+                res.status(200).json("Succesfully Posted");
+            }
+        });
+    } else {
+        res.status(500).json('An error occurred');
+    }
+
+    });
+
+app.put("/api/update",function(req,res){
+    if (req.isAuthenticated()){
+        const content = req.body.content;
+        const disc = req.body.disc;
+        const title=req.body.title;
+        const pimg=req.body.pimg;
+        const url = req.body.url;
+        Post.findOneAndUpdate({"url": url}, {$set:{"content": content , "disc":disc , "title": title,"pimg": pimg }}, {new: true}, (err, doc) => {
+        if (err) {
+            res.status(400).json("Somthing Went Wrong");
+        }else{
+            res.status(200).json("Succesfully Updated");
+        }
+        });
+    }else {
+        res.status(400).json("Login");
+}
+});    
+
+
+app.delete("/api/:del", function(req,res){
+    if (req.isAuthenticated()){
+        const postid = req.params.del;
+
+        Post.findOneAndDelete({"url": postid}, (err, doc) => {
+        if (err) {
+            res.status(400).json("Somthing Went Wrong on Deleting");
+        }else{
+            res.status(200).json("Succesfully Deleted");
+        }
+        });
+    }else {
+        res.status(400).json("Login");
+    }
+});
+
+
+app.get("/api/p/:postUrl", function (req, res) {
+
+    const reqPostUrl = req.params.postUrl;
+    Post.findOne({url: reqPostUrl}, function (err, post) {
+        res.status(200).json(post);
+    });
+
+});
+
+app.get("/api/search", function (req, res) {
+
+    const key = new RegExp(escapeRegex(req.query.q), 'gi');
+    Post.find({
+        title: key
+    }, function (err, articles) {
+        if (err) {
+            res.status(400).json(err);
+        } else {
+            if (articles.length < 1) {
+                res.status(200).json("No Post Found");
+            } else {
+                res.status(200).json(articles);
+            }
+        }
+    }).limit(6);
+
+});
+
+// end of API Section  //////////////////////////////
+
 // some functions
+
 function escapeRegex(text) {
     return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
 };
@@ -356,7 +519,6 @@ function date(pdate,udate) {
     var date = new Date(fdate);
     return date = pubinfo + " " + date.getDate() + "-" + months[date.getMonth()] + "-" + date.getFullYear();
 };
-
 
 
 app.listen(3000, function () {
