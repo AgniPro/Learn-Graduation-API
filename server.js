@@ -235,7 +235,7 @@ app.post("/login", async function (req, res) {
               res.cookie('refreshToken', refreshToken, { httpOnly: true, maxAge: 604800000 ,secure:true,
         domain:".learngraduation.web.app",
         sameSite:"none" });
-              res.json({ loggedIn: true,loginmsg: "Succesfully Login"});
+              res.json({ loggedIn: true,loginmsg: "Succesfully Login",accessToken:accessToken,refreshToken:refreshToken});
 
               
             }
