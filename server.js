@@ -10,6 +10,7 @@ const passport = require("passport");
 const passportLocalMongoose = require("passport-local-mongoose");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const findOrCreate = require("mongoose-findorcreate");
+const jwt = require("jsonwebtoken")
 const app = express();
 
 app.use(cookieParser());
@@ -34,7 +35,7 @@ app.use(session({
     cookie: {
         maxAge: 60 * 60 * 1000,
         secure:true,
-        domain:".learngraduation.web.app",
+        domain:".localhost:3001",
         sameSite:"none"
     } //1 hour
 }));
@@ -90,6 +91,48 @@ passport.use(new GoogleStrategy({
 ));
 
 // auth section
+
+let refreshTokens = []
+
+app.post('/token', (req, res) => {
+  const refreshToken = req.body.token
+  if (refreshToken == null) return res.sendStatus(401)
+  if (!refreshTokens.includes(refreshToken)) return res.sendStatus(403)
+  jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
+    if (err) return res.sendStatus(403)
+    const accessToken = generateAccessToken({ name: user.name })
+    res.json({ accessToken: accessToken })
+  })
+})
+app.delete('/logout', (req, res) => {
+  refreshTokens = refreshTokens.filter(token => token !== req.body.token)
+  res.sendStatus(204)
+})
+
+
+function generateAccessToken(ffuser) {
+  return jwt.sign(ffuser, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '150s' })
+}
+
+function authenticateToken(req, res, next) {
+  const token = req.cookies.accessToken;
+  if (token == null) return res.sendStatus(401);
+
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, ffuser) => {
+    console.log(err);
+    if (err) return res.sendStatus(403);
+    req.ffuser = ffuser;
+    next();
+  });
+}
+
+
+app.get('/posts', authenticateToken, (req, res) => {
+  res.json("succesfully acces the post")
+});
+
+
+// end of jwt
 
 app.get("/auth/google",
     passport.authenticate("google", {
@@ -180,8 +223,18 @@ app.post("/login", async function (req, res) {
                   loginmsg: "Something went wrong",
                 });
             } else {
+              console.log(user);
+              const username =user.email
+              const ffuser = { name: username }
+              const accessToken = generateAccessToken(ffuser)
+              const refreshToken = jwt.sign(ffuser, process.env.REFRESH_TOKEN_SECRET)
+              refreshTokens.push(refreshToken)
               req.session.user = { id: user._id, name: user.email };
-              res.send({ loggedIn: true, loginmsg: "Succesfully Login" });
+              res.cookie('accessToken', accessToken, { httpOnly: true, maxAge: 250000 });
+              res.cookie('refreshToken', refreshToken, { httpOnly: true, maxAge: 604800000 });
+              res.json({ loggedIn: true,loginmsg: "Succesfully Login"});
+
+              
             }
           });
         }
@@ -195,12 +248,13 @@ app.post("/login", async function (req, res) {
 
 
 
-app.get('/check-auth', (req, res) => {
-    if (req.isAuthenticated()) {
-      res.send({ authenticated: true });
-    } else {
-      res.send({ authenticated: false });
-    }
+app.get('/check-auth',authenticateToken, (req, res) => {
+    // if (req.isAuthenticated()) {
+    //   res.send({ authenticated: true });
+    // } else {
+    //   res.send({ authenticated: false });
+    // }
+    res.send({ authenticated: true });
   });
 
 // home functions
