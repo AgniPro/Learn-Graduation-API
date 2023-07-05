@@ -35,7 +35,7 @@ app.use(session({
     cookie: {
         maxAge: 60 * 60 * 1000,
         secure:true,
-        domain:".localhost:3001",
+        domain:".learngraduation.web.app",
         sameSite:"none"
     } //1 hour
 }));
@@ -229,8 +229,12 @@ app.post("/login", async function (req, res) {
               const refreshToken = jwt.sign(ffuser, process.env.REFRESH_TOKEN_SECRET)
               refreshTokens.push(refreshToken)
               req.session.user = { id: user._id, name: user.email };
-              res.cookie('accessToken', accessToken, { httpOnly: true, maxAge: 250000 });
-              res.cookie('refreshToken', refreshToken, { httpOnly: true, maxAge: 604800000 });
+              res.cookie('accessToken', accessToken, { httpOnly: true, maxAge: 250000 ,secure:true,
+        domain:".learngraduation.web.app",
+        sameSite:"none"});
+              res.cookie('refreshToken', refreshToken, { httpOnly: true, maxAge: 604800000 ,secure:true,
+        domain:".learngraduation.web.app",
+        sameSite:"none" });
               res.json({ loggedIn: true,loginmsg: "Succesfully Login"});
 
               
