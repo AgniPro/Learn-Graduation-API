@@ -46,8 +46,7 @@ app.use(passport.session());
 
 
 mongoose.set('strictQuery', false);
-mongoose.connect(process.env.DBPAS);
-// process.env.DBPAS
+mongoose.connect(process.env.DB_NAME);
 
 const userSchema = new mongoose.Schema ({
     email: String,
