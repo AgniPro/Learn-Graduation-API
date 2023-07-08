@@ -35,7 +35,7 @@ app.use(session({
     cookie: {
         maxAge: 60 * 60 * 1000,
         secure:true,
-        domain:".learngraduation.web.app",
+        domain:".localhost:3001",
         sameSite:"none"
     } //1 hour
 }));
@@ -52,6 +52,7 @@ const userSchema = new mongoose.Schema ({
     email: String,
     password: String,
     googleId: String,
+    jwtToken:String
 
   }, {
     timestamps: true
@@ -91,74 +92,59 @@ passport.use(new GoogleStrategy({
 
 // auth section
 
-let refreshTokens = []
-
-app.post('/token', (req, res) => {
-  const refreshToken = req.body.token
-  if (refreshToken == null) return res.sendStatus(401)
-  if (!refreshTokens.includes(refreshToken)) return res.sendStatus(403)
-  jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
-    if (err) return res.sendStatus(403)
-    const accessToken = generateAccessToken({ name: user.name })
-    res.json({ accessToken: accessToken })
-  })
-})
-app.delete('/logout', (req, res) => {
-  refreshTokens = refreshTokens.filter(token => token !== req.body.token)
-  res.sendStatus(204)
-})
-
-
 function generateAccessToken(ffuser) {
-  return jwt.sign(ffuser, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '150s' })
+  return jwt.sign(ffuser, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '360s' })
+}
+function generateRefreshToken(ffuser){
+  return jwt.sign(ffuser, process.env.REFRESH_TOKEN_SECRET ,{ expiresIn: '1800s' })
 }
 
 function authenticateToken(req, res, next) {
-  const token = req.cookies.accessToken;
+  const token = req.headers.accesstoken;
   if (token == null) return res.sendStatus(401);
 
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, ffuser) => {
     console.log(err);
     if (err) return res.sendStatus(403);
     req.ffuser = ffuser;
+    console.log(req.ffuser.name);
     next();
   });
 }
-
-
-app.get('/posts', authenticateToken, (req, res) => {
-  res.json("succesfully acces the post")
-});
-
-
-// end of jwt
 
 app.get("/auth/google",
     passport.authenticate("google", {
         scope: ["email", "profile"]
     }));
 
-app.get("/auth/google/secrets",
-    passport.authenticate("google", {
-        successRedirect: process.env.CLIENTURL,
-        failureRedirect: process.env.CLIENTURL+"/login"
-    }));
-
+app.get('/auth/google/succes',
+    passport.authenticate('google', { failureRedirect: '/login'}),
+    (req, res) => {
+        // Successful authentication
+        console.log(req.user);
+        const token = jwt.sign({ userId: "req.user.id" }, process.env.JWT_SECRET);
+        console.log(token);
+        res.redirect(`${process.env.CLIENTURL}?token=${token}`);
+    }
+);
 
 app.get("/logout", function (req, res) {
-    req.logout(function (err) {
-        if (err) {
-          return next(err);
-        }
-        res
-          .clearCookie("connect.sid", {
-            sameSite: "none",
-            secure: true,
-          })
-          .status(200)
-          .json({authenticated: false,loginmsg:"User has been logged out."});
-      });
-
+  const refreshToken = req.headers.refreshtoken;
+  if (refreshToken == null) return res.status(403).json("No Key RECIVED")
+  req.logout(function (err) {
+    if (err) {
+      return next(err);
+    }
+    User.findOneAndUpdate({ "jwtToken": refreshToken }, { $set: { "jwtToken": "logout" } }, { new: true }, (err) => {
+      if (err) {
+        res.status(501).json(err);
+      } else {
+        res.clearCookie("refreshToken", { sameSite: "none",secure: true,})
+        res.clearCookie("accessToken", {sameSite: "none",secure: true,})
+        res.status(200).json({ authenticated: false, loginmsg: "User has been logged out." });
+      }
+    });
+  });
 });
 
 app.post("/register", function (req, res) {
@@ -179,9 +165,7 @@ app.post("/register", function (req, res) {
                 if (err) {
                   return res.status(500).json(err);
                 } else {
-                  passport.authenticate("local")(req, res, function () {
-                    return res.status(200).json("User has been created.");
-                  });
+                  return res.status(200).json("User has been created.");
                 }
               }
             );
@@ -199,45 +183,26 @@ app.post("/login", async function (req, res) {
     } else {
       passport.authenticate("local", function (err, user, info) {
         if (err) {
-          res
-            .status(400)
-            .json({
-              loggedIn: false,
-              loginmsg: "something went wrong",
-            });
+          res.status(400).json({loggedIn: false,loginmsg: "something went wrong"});
         } else if (!user) {
-          res
-            .status(401)
-            .json({
-              loggedIn: false,
-              loginmsg: "Incorrect email or password",
-            });
+          res.status(401).json({loggedIn: false,loginmsg: "Incorrect email or password"});
         } else {
           req.logIn(user, function (err) {
             if (err) {
-              res
-                .status(400)
-                .json({
-                  loggedIn: false,
-                  loginmsg: "Something went wrong",
-                });
+              res.status(400).json({loggedIn: false,loginmsg: "Something went wrong"});
             } else {
-              console.log(user);
-              const username =user.email
-              const ffuser = { name: username }
+              const ffuser = { name: user.username }
               const accessToken = generateAccessToken(ffuser)
-              const refreshToken = jwt.sign(ffuser, process.env.REFRESH_TOKEN_SECRET)
-              refreshTokens.push(refreshToken)
-              req.session.user = { id: user._id, name: user.email };
-              res.cookie('accessToken', accessToken, { httpOnly: true, maxAge: 250000 ,secure:true,
-        domain:".learngraduation.web.app",
-        sameSite:"none"});
-              res.cookie('refreshToken', refreshToken, { httpOnly: true, maxAge: 604800000 ,secure:true,
-        domain:".learngraduation.web.app",
-        sameSite:"none" });
-              res.json({ loggedIn: true,loginmsg: "Succesfully Login",accessToken:accessToken,refreshToken:refreshToken});
-
-              
+              const refreshToken = generateRefreshToken(ffuser)
+              req.session.user = { id: user._id, name: user.username };
+              res.cookie('accessToken', accessToken, { httpOnly: true, maxAge: 250000 });
+              User.findOneAndUpdate({"username":user.username}, {$set:{"jwtToken": refreshToken }}, {new: true}, (err) => {
+                if (err) {
+                  res.status(501).json(err);
+                }else{
+                  res.json({ loggedIn: true,loginmsg: "Succesfully Login",accessToken:accessToken,refreshToken:refreshToken});
+                }}
+              )
             }
           });
         }
@@ -250,15 +215,42 @@ app.post("/login", async function (req, res) {
 });
 
 
+app.get('/check-auth', (req, res) => {
 
-app.get('/check-auth',authenticateToken, (req, res) => {
-    // if (req.isAuthenticated()) {
-    //   res.send({ authenticated: true });
-    // } else {
-    //   res.send({ authenticated: false });
-    // }
-    res.send({ authenticated: true });
-  });
+  const refreshToken = req.headers.refreshtoken;
+  if (refreshToken === "undefined") {
+    return res.sendStatus(401)
+  }
+  else if (refreshToken == null) {
+    return res.sendStatus(401)
+  }
+  else {
+    User.findOne({ jwtToken: refreshToken }, function (err, fuser) {
+      if (fuser == null) {
+        res.sendStatus(401);
+      } else {
+        jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
+          if (err) return res.sendStatus(403)
+          const newRefreshToken = generateRefreshToken({ name: user.name });
+          const accessToken = generateAccessToken({ name: user.name });
+          User.findOneAndUpdate({ "username": user.name }, { $set: { "jwtToken": newRefreshToken } }, { new: true }, (err) => {
+            if (err) {
+              res.status(501).json(err);
+            } else {
+              res.json({authenticated: true, accessToken: accessToken, refreshToken:newRefreshToken });
+            }
+          }
+          )
+        })
+      }
+    });
+  }
+});
+
+
+app.get('/posts', authenticateToken, (req, res) => {
+  res.json("succesfully acces the post")
+});
 
 // home functions
 
@@ -276,7 +268,6 @@ const postSchema = new mongoose.Schema ({
 const Post = new mongoose.model("Post", postSchema);
 
 
-
 app.get("/", function (req, res){
     const skip= req.query.skip ? Number(req.query.skip) : 0;
     
@@ -289,12 +280,11 @@ app.get("/", function (req, res){
  
  });
 
-app.get("/dashboard", function (req, res) {
-  if (req.isAuthenticated()) {
+app.get("/dashboard",authenticateToken,  (req, res)=> {
+      console.log(req.ffuser.name);
       const username = new RegExp(escapeRegex(req.user.username), 'gi');
       Post.find({ "username": username }, function (err, posts) {
           if (err) {
-              console.log(err);
               res.status(500).json({ message: "An error occurred" });
           } else {
               if (posts.length === 0) {
@@ -306,9 +296,6 @@ app.get("/dashboard", function (req, res) {
       }).sort({
           _id: -1
       }).limit(6);
-  } else {
-      res.sendStatus(401);
-  }
 });
 
 app.post("/", function(req, res){
