@@ -74,7 +74,6 @@ passport.deserializeUser(function (id, done) {
     });
 });
 
-
 passport.use(new GoogleStrategy({
         clientID: process.env.CLIENT_ID,
         clientSecret: process.env.CLIENT_SECRET,
@@ -85,7 +84,14 @@ passport.use(new GoogleStrategy({
         User.findOrCreate({
             googleId: profile.id
         }, function (err, user) {
-            return cb(err, user);
+          User.findOneAndUpdate({"email":user.email}, {$set:{"jwtToken":generateRefreshToken({ name: user.email }) }}, {new: true}, (err) => {
+            if (err) {
+              res.status(501).json(err);
+            }else{
+              return cb(err, user);
+            }}
+          )
+            
         });
     }
 ));
@@ -100,7 +106,7 @@ function generateRefreshToken(ffuser){
 }
 
 function authenticateToken(req, res, next) {
-  const token = req.headers.accesstoken;
+  const token = req.cookies.accessToken;
   if (token == null) return res.sendStatus(401);
 
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, ffuser) => {
@@ -117,19 +123,23 @@ app.get("/auth/google",
         scope: ["email", "profile"]
     }));
 
-app.get('/auth/google/succes',
+app.get('/auth/google/secrets',
     passport.authenticate('google', { failureRedirect: '/login'}),
     (req, res) => {
-        // Successful authentication
-        console.log(req.user);
-        const token = jwt.sign({ userId: "req.user.id" }, process.env.JWT_SECRET);
-        console.log(token);
-        res.redirect(`${process.env.CLIENTURL}?token=${token}`);
+        const email = req.user.email;
+        User.findOne({ email: email }, function (err, fuser) {
+          if (err) {
+            res.status(501).json(err);
+          } else {
+            res.redirect(`${process.env.CLIENTURL}?token=${fuser.jwtToken}`);
+          }
+
+        });
     }
 );
 
 app.get("/logout", function (req, res) {
-  const refreshToken = req.headers.refreshtoken;
+  const refreshToken = req.cookies.refreshToken;
   if (refreshToken == null) return res.status(403).json("No Key RECIVED")
   req.logout(function (err) {
     if (err) {
@@ -217,7 +227,7 @@ app.post("/login", async function (req, res) {
 
 app.get('/check-auth', (req, res) => {
 
-  const refreshToken = req.headers.refreshtoken;
+  const refreshToken = req.cookies.refreshToken;
   if (refreshToken === "undefined") {
     return res.sendStatus(401)
   }
@@ -251,6 +261,8 @@ app.get('/check-auth', (req, res) => {
 app.get('/posts', authenticateToken, (req, res) => {
   res.json("succesfully acces the post")
 });
+
+
 
 // home functions
 
