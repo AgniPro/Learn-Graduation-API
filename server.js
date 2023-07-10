@@ -123,7 +123,7 @@ app.get("/auth/google",
         scope: ["email", "profile"]
     }));
 
-app.get('/auth/google/secrets',
+app.get('/auth/google/success',
     passport.authenticate('google', { failureRedirect: '/login'}),
     (req, res) => {
         const email = req.user.email;
