@@ -74,6 +74,7 @@ passport.deserializeUser(function (id, done) {
     });
 });
 
+
 passport.use(new GoogleStrategy({
         clientID: process.env.CLIENT_ID,
         clientSecret: process.env.CLIENT_SECRET,
@@ -106,7 +107,7 @@ function generateRefreshToken(ffuser){
 }
 
 function authenticateToken(req, res, next) {
-  const token = req.cookies.accessToken;
+  const token = req.headers.accessToken;
   if (token == null) return res.sendStatus(401);
 
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, ffuser) => {
@@ -139,7 +140,7 @@ app.get('/auth/google/success',
 );
 
 app.get("/logout", function (req, res) {
-  const refreshToken = req.cookies.refreshToken;
+  const refreshToken = req.headers.refreshtoken;
   if (refreshToken == null) return res.status(403).json("No Key RECIVED")
   req.logout(function (err) {
     if (err) {
@@ -149,8 +150,6 @@ app.get("/logout", function (req, res) {
       if (err) {
         res.status(501).json(err);
       } else {
-        res.clearCookie("refreshToken", { sameSite: "none",secure: true,})
-        res.clearCookie("accessToken", {sameSite: "none",secure: true,})
         res.status(200).json({ authenticated: false, loginmsg: "User has been logged out." });
       }
     });
@@ -210,6 +209,7 @@ app.post("/login", async function (req, res) {
                 if (err) {
                   res.status(501).json(err);
                 }else{
+                  res.cookie("refreshToken",refreshToken)
                   res.json({ loggedIn: true,loginmsg: "Succesfully Login",accessToken:accessToken,refreshToken:refreshToken});
                 }}
               )
@@ -227,7 +227,7 @@ app.post("/login", async function (req, res) {
 
 app.get('/check-auth', (req, res) => {
 
-  const refreshToken = req.cookies.refreshToken;
+  const refreshToken = req.headers.refreshtoken;
   if (refreshToken === "undefined") {
     return res.sendStatus(401)
   }
@@ -261,8 +261,6 @@ app.get('/check-auth', (req, res) => {
 app.get('/posts', authenticateToken, (req, res) => {
   res.json("succesfully acces the post")
 });
-
-
 
 // home functions
 
