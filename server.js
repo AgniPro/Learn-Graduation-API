@@ -43,8 +43,6 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-
-
 mongoose.set('strictQuery', false);
 mongoose.connect(process.env.DB_NAME);
 
@@ -85,11 +83,11 @@ passport.use(new GoogleStrategy({
         User.findOrCreate({
             googleId: profile.id
         }, function (err, user) {
-          User.findOneAndUpdate({"email":user.email}, {$set:{"jwtToken":generateRefreshToken({ name: user.email }) }}, {new: true}, (err) => {
+          User.findOneAndUpdate({"googleId":user.googleId}, {$set:{"jwtToken":generateRefreshToken({ name:profile._json.email}),"email":profile._json.email }}, {new: true}, (err,jwtuser) => {
             if (err) {
               res.status(501).json(err);
             }else{
-              return cb(err, user);
+              return cb(err,jwtuser);
             }}
           )
             
@@ -107,14 +105,11 @@ function generateRefreshToken(ffuser){
 }
 
 function authenticateToken(req, res, next) {
-  const token = req.headers.accessToken;
+  const token = req.headers.accesstoken;
   if (token == null) return res.sendStatus(401);
-
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, ffuser) => {
-    console.log(err);
     if (err) return res.sendStatus(403);
-    req.ffuser = ffuser;
-    console.log(req.ffuser.name);
+    req.jwtuser = ffuser;
     next();
   });
 }
@@ -134,7 +129,6 @@ app.get('/auth/google/success',
           } else {
             res.redirect(`${process.env.CLIENTURL}?token=${fuser.jwtToken}`);
           }
-
         });
     }
 );
@@ -150,7 +144,7 @@ app.get("/logout", function (req, res) {
       if (err) {
         res.status(501).json(err);
       } else {
-        res.status(200).json({ authenticated: false, loginmsg: "User has been logged out." });
+        res.status(200).json({ authenticated: false, message: "User has been logged out." });
       }
     });
   });
@@ -163,7 +157,7 @@ app.post("/register", function (req, res) {
           console.log(err);
         } else {
           if (user.length) {
-            return res.status(409).json("User already exists!");
+            return res.status(409).json({message:"User already exists!"});
           } else {
             User.register(
               {
@@ -174,7 +168,7 @@ app.post("/register", function (req, res) {
                 if (err) {
                   return res.status(500).json(err);
                 } else {
-                  return res.status(200).json("User has been created.");
+                  return res.status(200).json({message:"User has been created."});
                 }
               }
             );
@@ -192,25 +186,23 @@ app.post("/login", async function (req, res) {
     } else {
       passport.authenticate("local", function (err, user, info) {
         if (err) {
-          res.status(400).json({loggedIn: false,loginmsg: "something went wrong"});
+          res.status(400).json({loggedIn: false,message: "something went wrong"});
         } else if (!user) {
-          res.status(401).json({loggedIn: false,loginmsg: "Incorrect email or password"});
+          res.status(401).json({loggedIn: false,message: "Incorrect email or password"});
         } else {
           req.logIn(user, function (err) {
             if (err) {
-              res.status(400).json({loggedIn: false,loginmsg: "Something went wrong"});
+              res.status(400).json({loggedIn: false,message: "Something went wrong"});
             } else {
               const ffuser = { name: user.username }
               const accessToken = generateAccessToken(ffuser)
               const refreshToken = generateRefreshToken(ffuser)
               req.session.user = { id: user._id, name: user.username };
-              res.cookie('accessToken', accessToken, { httpOnly: true, maxAge: 250000 });
               User.findOneAndUpdate({"username":user.username}, {$set:{"jwtToken": refreshToken }}, {new: true}, (err) => {
                 if (err) {
                   res.status(501).json(err);
                 }else{
-                  res.cookie("refreshToken",refreshToken)
-                  res.json({ loggedIn: true,loginmsg: "Succesfully Login",accessToken:accessToken,refreshToken:refreshToken});
+                  res.json({ loggedIn: true,message: "Succesfully Login",accessToken:accessToken,refreshToken:refreshToken});
                 }}
               )
             }
@@ -220,7 +212,7 @@ app.post("/login", async function (req, res) {
     }
   } catch (err) {
     console.log(err);
-    res.status(500).send("An error occurred");
+    res.status(500).send({message:"An error occurred"});
   }
 });
 
@@ -245,7 +237,7 @@ app.get('/check-auth', (req, res) => {
           const accessToken = generateAccessToken({ name: user.name });
           User.findOneAndUpdate({ "username": user.name }, { $set: { "jwtToken": newRefreshToken } }, { new: true }, (err) => {
             if (err) {
-              res.status(501).json(err);
+              res.status(501).json({message:err});
             } else {
               res.json({authenticated: true, accessToken: accessToken, refreshToken:newRefreshToken });
             }
@@ -291,8 +283,7 @@ app.get("/", function (req, res){
  });
 
 app.get("/dashboard",authenticateToken,  (req, res)=> {
-      console.log(req.ffuser.name);
-      const username = new RegExp(escapeRegex(req.user.username), 'gi');
+      const username = new RegExp(escapeRegex(req.jwtuser.name), 'gi');
       Post.find({ "username": username }, function (err, posts) {
           if (err) {
               res.status(500).json({ message: "An error occurred" });
@@ -308,10 +299,10 @@ app.get("/dashboard",authenticateToken,  (req, res)=> {
       }).limit(6);
 });
 
-app.post("/", function(req, res){
-    if (req.isAuthenticated()) {
+app.post("/",authenticateToken, function(req, res){
+
         const post = new Post({
-            username: req.user.username,
+            username: req.jwtuser.name,
             url:req.body.url,
             title:req.body.title,
             disc:req.body.disc,
@@ -324,15 +315,10 @@ app.post("/", function(req, res){
                 res.status(200).json("Post has been created.");
             }
         });
-    } else {
-        res.status(401).json("Not authenticated!");
-    }
-
     });
 
-app.put("/:postUrl",function(req,res){
-  const postid = req.params.postUrl;
-    if (req.isAuthenticated()){
+app.put("/:postUrl",authenticateToken,function(req,res){
+        const postid = req.params.postUrl;
         const content = req.body.content;
         const disc = req.body.disc;
         const title=req.body.title;
@@ -344,16 +330,11 @@ app.put("/:postUrl",function(req,res){
             res.status(200).json("Post has been updated.");
         }
         });
-    }else {
-        res.status(401).json("Not authenticated!");
-}
 });    
 
 
-app.delete("/:postUrl", function(req,res){
-    if (req.isAuthenticated()){
+app.delete("/:postUrl",authenticateToken, function(req,res){
         const postid = req.params.postUrl;
-        
         Post.findOneAndDelete({"url": postid}, (err, doc) => {
         if (err) {
             console.log("Something when wrong!");
@@ -361,9 +342,6 @@ app.delete("/:postUrl", function(req,res){
             res.status(200).json("Post has been deleted!");
         }
         });
-    }else {
-        res.status(401).json("Not authenticated!");
-    }
 });
 
 
