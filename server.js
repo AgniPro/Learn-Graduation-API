@@ -277,7 +277,7 @@ app.get("/", function (req, res){
         res.status(200).json(post);
     }).sort({
         _id: -1
-    }).skip(skip).limit(2);
+    }).skip(skip).limit(3);
         
  
  });
