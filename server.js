@@ -360,6 +360,7 @@ app.get("/p/:postUrl", function (req, res) {
 app.get("/search", function (req, res) {
 
     const key = new RegExp(escapeRegex(req.query.q), 'gi');
+    const skip= req.query.skip ? Number(req.query.skip) : 0;
     Post.find({
         title: key
     }, function (err, articles) {
@@ -368,7 +369,7 @@ app.get("/search", function (req, res) {
         } else {
             res.send(articles);
         }
-    }).limit(6);
+    }).skip(skip).limit(6);
 
 });
 
