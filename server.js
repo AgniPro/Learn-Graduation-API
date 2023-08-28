@@ -256,17 +256,58 @@ app.get('/posts', authenticateToken, (req, res) => {
 
 // home functions
 
-const postSchema = new mongoose.Schema ({
-    username:String,
-    url:String,
-    title:String,
-    disc:String,
-    pimg:String,
-    content:String,
+// new post statigy
+const Schema = mongoose.Schema;
+
+const CommentSchema = new Schema({
+  author: {
+    type: String,
+    require:true
   },
-   {
-    timestamps: true
-});
+  content: {
+      type: String,
+      required: true
+  }
+}, { timestamps: true });
+
+const postSchema = new Schema({
+  url: {
+      type: String,
+      require:true
+  },
+  title: {
+      type: String,
+      required: true
+  },
+  discription: { type: String },
+  image: {
+      type: String
+  },
+  content: {
+      type: String,
+      required: true
+  },
+  author: {
+      type: String,
+      require:true
+  },
+  categories: [{
+      type: String
+  }],
+  tags: [{
+      type: String
+  }],
+  comments: [CommentSchema],
+  likes: [{
+    type: String
+    
+  }],
+  shares: [{
+    type: String
+  }]
+}, { timestamps: true });
+
+
 const Post = new mongoose.model("Post", postSchema);
 
 
@@ -284,7 +325,7 @@ app.get("/", function (req, res){
 
 app.get("/dashboard",authenticateToken,  (req, res)=> {
       const username = new RegExp(escapeRegex(req.jwtuser.name), 'gi');
-      Post.find({ "username": username }, function (err, posts) {
+      Post.find({ "author": username }, function (err, posts) {
           if (err) {
               res.status(500).json({ message: "An error occurred" });
           } else {
@@ -299,31 +340,34 @@ app.get("/dashboard",authenticateToken,  (req, res)=> {
       }).limit(6);
 });
 
-app.post("/",authenticateToken, function(req, res){
+app.post("/", authenticateToken, function(req, res) {
+  const post = new Post({
+      author: req.jwtuser.name,
+      url: req.body.url,
+      title: req.body.title,
+      discription: req.body.disc,
+      image: req.body.pimg,
+      content: req.body.content
+  });
+  post.save(function(err) {
+      if (!err) {
+          res.status(200).json("Post has been created.");
+      } else {
+          
+          res.status(400).json({ error: err.message });
+      }
+  });
+});
 
-        const post = new Post({
-            username: req.jwtuser.name,
-            url:req.body.url,
-            title:req.body.title,
-            disc:req.body.disc,
-            pimg:req.body.pimg,
-            content:req.body.content,
-
-        });
-        post.save(function (err) {
-            if (!err) {
-                res.status(200).json("Post has been created.");
-            }
-        });
-    });
 
 app.put("/:postUrl",authenticateToken,function(req,res){
         const postid = req.params.postUrl;
         const content = req.body.content;
-        const disc = req.body.disc;
+        const discription = req.body.disc;
         const title=req.body.title;
-        const pimg=req.body.pimg;
-        Post.findOneAndUpdate({"url": postid}, {$set:{"content": content , "disc":disc , "title": title,"pimg": pimg }}, {new: true}, (err, doc) => {
+        const image=req.body.pimg;
+
+        Post.findOneAndUpdate({"url": postid}, {$set:{"content": content , "discription":discription , "title": title,"image": image }}, {new: true}, (err, doc) => {
         if (err) {
           res.status(501).json(err);
         }else{
@@ -372,6 +416,56 @@ app.get("/search", function (req, res) {
     }).skip(skip).limit(6);
 
 });
+
+//  Commment section
+
+
+app.post('/p/:postId/comments', authenticateToken, function(req, res) {
+  const comment = {
+    content: req.body.content,
+    author: req.jwtuser.name
+  };
+  Post.updateOne({ _id: req.params.postId }, { $push: { comments: comment } }, {
+    timestamps: false
+  })
+    .then(result => {
+      res.status(200).json('Comment has been added.');
+    })
+    .catch(err => {
+      res.status(500).json('Error adding comment.');
+    });
+});
+
+// likes
+
+app.post('/p/:postId/likes', authenticateToken, function (req, res) {
+  const email = req.jwtuser.name;
+  
+  Post.findOne({ _id: req.params.postId }, function (err, post) {
+    if (post.likes.includes(email)) {
+      Post.updateOne({ _id: req.params.postId }, { $pull: { likes: email } }, {
+        timestamps: false
+      })
+        .then(result => {
+          res.status(200).json('Like has been removed.');
+        })
+        .catch(err => {
+          res.status(500).json('Error removing like.');
+        });
+    } else {
+      Post.updateOne({ _id: req.params.postId }, { $push: { likes: email } }, {
+        timestamps: false
+      })
+        .then(result => {
+          res.status(200).json('Like has been added.');
+        })
+        .catch(err => {
+          res.status(500).json('Error adding like.');
+        });
+    }
+  });
+});
+
 
 // some functions
 function escapeRegex(text) {

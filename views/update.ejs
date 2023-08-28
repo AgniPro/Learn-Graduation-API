@@ -1,134 +1,57 @@
-<%- include("partials/htmltop"); -%>
+<%- include('partials/header') %>
 
-<body class="MN-2 mobS hdMn bD onItm onPg" id="mainCont">
-
-    <script>
-        (localStorage.getItem('mode')) === 'darkmode' ? document.querySelector('#mainCont').classList.add('drK'):
-            document.querySelector('#mainCont').classList.remove('drK')
-    </script>
-
-    <input class="prfI hidden" id="offPrf" type="checkbox">
-    <input class="navI hidden" id="offNav" type="checkbox">
-    <div class="mainWrp">
-
-        <%- include("partials/header"); -%>
-        <!--[ Content section ]-->
-        <div class="mainIn">
-            <!--[ Menu content ]-->
-            <%- include("partials/widget/mobilemenucontent"); -%>
-            <!--[ Blog content ]-->
-            <div class="blogCont">
-                <div class="secIn">
-
-                    <%- include("partials/widget/notifcation"); -%>
-
-                    <div class="blogM">
-
-
-                        <main class="blogItm mainbar">
-                            <div class="section" id="main-widget">
-                                <div class="widget Blog" data-version="2" id="Blog1">
-                                    <div class="blogPts">
-                                        <article class="ntry ps post">
-                                            <div class="brdCmb" itemscope="itemscope"
-                                                itemtype="https://schema.org/BreadcrumbList">
-                                                <div class="hm" itemprop="itemListElement" itemscope="itemscope"
-                                                    itemtype="https://schema.org/ListItem">
-                                                    <a href="https://learngraduation.blogspot.com/"
-                                                        itemprop="item"><span itemprop="name">Home</span></a>
-                                                    <meta content="1" itemprop="position">
-                                                </div>
-                                                <div class="tl" data-text="Compose"></div>
-                                            </div>
-                                            <h1 class="pTtl aTtl sml itm">
-                                                <span>
-                                                    Compose
-                                                </span>
-                                            </h1>
-                                            <div class="pInr">
-                                                <div class="pEnt" >
-                                                    <div class="pS post-body postBody" id="postBody">
-                                                        <div class="container">
-                                                            <div class="jumbotron centered">
-                                                              <i class="fas fa-key fa-6x"></i>
-                                                              <h1 class="display-3">Update Post</h1>
-                                                              <p class="secret-text">All field are Important</p>
-                                                              <div id="url"><%- url %></div>
-                                                              <div class="form-group row">
-                                                                <label for="title">Title:</label><br>
-                                                                <input required class="form-control form-control-lg " type="text" id="title" value="<%- title %>" ><br><br>
-                                                                <label for="disc">Disc:</label><br>
-                                                                <input required class="form-control " type="text" id="disc" value="<%- disc %>"><br><br>
-                                                                <label for="pimg">Thumbnail:</label><br>
-                                                                <input required class="form-control" type="text" id="pimg" value="<%- pimg %>"><br><br>
-                                                                  <label for="editor">Content:</label><br>
-                                                                  <code class="form-control " contenteditable="true" id="editor" style="min-width: 200px; min-height: 50px;"><%- content %></code><br><br>
-                                                                <button class="btn btn-dark" onclick="savePost()">Save Post</button>
-                                                              </div>
-                                                            </div>
-                                                          </div>
-                                                            <script>
-                                                          
-                                                          
-                                                            function savePost() {
-                                                              let postTitle = document.getElementById('title').value;
-                                                              let postContent = document.getElementById('editor').innerText;
-                                                              let url = document.getElementById("url").innerText;
-                                                              let disc = document.getElementById("disc").value;
-                                                              let pimg = document.getElementById("pimg").value;
-                                                              fetch('/update', {
-                                                                method: 'POST',
-                                                                headers: {
-                                                                  'Content-Type': 'application/x-www-form-urlencoded'
-                                                                },
-                                                                body: new URLSearchParams({
-                                                                  url: url,
-                                                                  title: postTitle,
-                                                                  disc: disc,
-                                                                  pimg: pimg,
-                                                                  content: postContent
-                                                                })
-                                                              }).then(response => {
-                                                                if (response.ok) {
-                                                                  window.location.href = '/dashboard';
-                                                                }
-                                                              }).catch(error => {
-                                                                alert("Somthing Went Wrong")
-                                                                console.error(error);
-                                                              });
-                                                          
-                                                          
-                                                          
-                                                            }
-                                                          </script>
-                                                         
-                                                    </div>
-
-                                                </div>
-                                            </div>
-                                        </article>
-                                    </div>
-                                </div>
-                            </div>
-                        </main>
-                    </div>
-
-                    <%- include("partials/widget/mobilemenu"); -%>
-
-                    <%- include("partials/footer"); -%>
-                </div>
-            </div>
-        </div>
+<div class="container">
+  <div class="jumbotron centered">
+    <i class="fas fa-key fa-6x"></i>
+    <h1 class="display-3">Update Post</h1>
+    <p class="secret-text">All field are Important</p>
+    <div id="url"><%- url %></div>
+    <div class="form-group row">
+      <label for="title">Title:</label><br>
+      <input required class="form-control form-control-lg " type="text" id="title" value="<%- title %>" ><br><br>
+      <label for="disc">Disc:</label><br>
+      <input required class="form-control " type="text" id="disc" value="<%- disc %>"><br><br>
+      <label for="pimg">Thumbnail:</label><br>
+      <input required class="form-control" type="text" id="pimg" value="<%- pimg %>"><br><br>
+        <label for="editor">Content:</label><br>
+      <div class="form-control " contenteditable="true" id="editor"><%- content %></div>
+      <button class="btn btn-dark" onclick="savePost()">Save Post</button>
     </div>
+  </div>
+</div>
+<%- include('partials/footer') %>
 
-    <script src="../js/script.js"></script>
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('../sw.js');
-            });
-        }
-    </script>
-</body>
+<script>
 
-</html>
+  
+  function savePost() {
+    let postTitle = document.getElementById('title').value;
+    let postContent = document.getElementById('editor').innerText;
+    let url = document.getElementById("url").innerText;
+    let disc = document.getElementById("disc").value;
+    let pimg = document.getElementById("pimg").value;
+    fetch('/update', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: new URLSearchParams({
+        url: url,
+        title: postTitle,
+        disc: disc,
+        pimg: pimg,
+        content: postContent
+      })
+    }).then(response => {
+      if (response.ok) {
+        window.location.href = '/secrets';
+      }
+    }).catch(error => {
+      alert("Somthing Went Wrong")
+      console.error(error);
+    });
+
+
+
+  }
+</script>
