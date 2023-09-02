@@ -202,7 +202,7 @@ app.post("/login", async function (req, res) {
                 if (err) {
                   res.status(501).json(err);
                 }else{
-                  res.json({ loggedIn: true,message: "Succesfully Login",accessToken:accessToken,refreshToken:refreshToken});
+                  res.json({ loggedIn: true,message: "Succesfully Login",accessToken:accessToken,refreshToken:refreshToken ,user:user.username?.replace("@gmail.com", "")});
                 }}
               )
             }
@@ -311,14 +311,12 @@ const Post = new mongoose.model("Post", postSchema);
 
 app.get("/", function (req, res){
     const skip= req.query.skip ? Number(req.query.skip) : 0;
-    
+    const limit = skip === 0 ? 4 : 3;
     Post.find({}, function (err, post) {
         res.status(200).json(post);
     }).sort({
         _id: -1
-    }).skip(skip).limit(3);
-        
- 
+    }).skip(skip).limit(limit);
  });
 
  app.get("/popular", function (req, res) {
@@ -362,7 +360,6 @@ app.post("/", authenticateToken, function(req, res) {
       if (!err) {
           res.status(200).json("Post has been created.");
       } else {
-          
           res.status(400).json({ error: err.message });
       }
   });
