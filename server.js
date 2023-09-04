@@ -35,7 +35,7 @@ app.use(session({
     cookie: {
         maxAge: 60 * 60 * 1000,
         secure:true,
-        domain:".localhost:3001",
+        domain:".learngraduation.web.app",
         sameSite:"none"
     } //1 hour
 }));
@@ -71,7 +71,6 @@ passport.deserializeUser(function (id, done) {
         done(err, user);
     });
 });
-
 
 passport.use(new GoogleStrategy({
         clientID: process.env.CLIENT_ID,
@@ -151,7 +150,6 @@ app.get("/logout", function (req, res) {
 });
 
 app.post("/register", function (req, res) {
-    
     User.find({ username: req.body.username }, function (err, user) {
         if (err) {
           console.log(err);
@@ -216,7 +214,6 @@ app.post("/login", async function (req, res) {
   }
 });
 
-
 app.get('/check-auth', (req, res) => {
 
   const refreshToken = req.headers.refreshtoken;
@@ -249,14 +246,12 @@ app.get('/check-auth', (req, res) => {
   }
 });
 
-
 app.get('/posts', authenticateToken, (req, res) => {
   res.json("succesfully acces the post")
 });
 
 // home functions
 
-// new post statigy
 const Schema = mongoose.Schema;
 
 const CommentSchema = new Schema({
@@ -305,9 +300,7 @@ const postSchema = new Schema({
   views: {type: Number, default: 0}
 }, { timestamps: true });
 
-
 const Post = new mongoose.model("Post", postSchema);
-
 
 app.get("/", function (req, res){
     const skip= req.query.skip ? Number(req.query.skip) : 0;
@@ -328,7 +321,6 @@ app.get("/", function (req, res){
       }
   });
 });
-
 
 app.get("/dashboard",authenticateToken,  (req, res)=> {
       const username = new RegExp(escapeRegex(req.jwtuser.name), 'gi');
@@ -352,9 +344,11 @@ app.post("/", authenticateToken, function(req, res) {
       author: req.jwtuser.name,
       url: req.body.url,
       title: req.body.title,
-      discription: req.body.disc,
-      image: req.body.pimg,
-      content: req.body.content
+      discription: req.body.discription,
+      image: req.body.image,
+      content: req.body.content,
+      categories:req.body.categories,
+      tags:req.body.tags
   });
   post.save(function(err) {
       if (!err) {
@@ -365,23 +359,17 @@ app.post("/", authenticateToken, function(req, res) {
   });
 });
 
-
-app.put("/:postUrl",authenticateToken,function(req,res){
-        const postid = req.params.postUrl;
-        const content = req.body.content;
-        const discription = req.body.disc;
-        const title=req.body.title;
-        const image=req.body.pimg;
-
-        Post.findOneAndUpdate({"url": postid}, {$set:{"content": content , "discription":discription , "title": title,"image": image }}, {new: true}, (err, doc) => {
-        if (err) {
-          res.status(501).json(err);
-        }else{
-            res.status(200).json("Post has been updated.");
-        }
-        });
+app.put("/:postUrl", authenticateToken, function (req, res) {
+  const uPost = { "content": req.body.content, "discription": req.body.discription, "title": req.body.title, "image": req.params.image, "categories": req.params.categories, "tags": req.params.tags }
+  const postid = req.params.postUrl;
+  Post.findOneAndUpdate({ "url": postid }, { $set: uPost }, { new: true }, (err, doc) => {
+    if (err) {
+      res.status(501).json(err);
+    } else {
+      res.status(200).json("Post has been updated.");
+    }
+  });
 });    
-
 
 app.delete("/:postUrl",authenticateToken, function(req,res){
         const postid = req.params.postUrl;
@@ -427,8 +415,6 @@ app.get("/search", function (req, res) {
 });
 
 //  Commment section
-
-
 app.post('/p/:postId/comments', authenticateToken, function(req, res) {
   const comment = {
     content: req.body.content,
@@ -446,7 +432,6 @@ app.post('/p/:postId/comments', authenticateToken, function(req, res) {
 });
 
 // likes
-
 app.post('/p/:postId/likes', authenticateToken, function (req, res) {
   const email = req.jwtuser.name;
   
@@ -475,25 +460,10 @@ app.post('/p/:postId/likes', authenticateToken, function (req, res) {
   });
 });
 
-
 // some functions
 function escapeRegex(text) {
     return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
 };
-
-function date(pdate,udate) {
-    var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "July", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    if (pdate.toString() === udate.toString()) {
-        fdate= pdate; pubinfo= "publish :";
-    }else{
-        fdate=udate; pubinfo ="updated :"
-    }
-    var fdate ; var pubinfo ;
-    var date = new Date(fdate);
-    return date = pubinfo + " " + date.getDate() + "-" + months[date.getMonth()] + "-" + date.getFullYear();
-};
-
-
 
 app.listen(3000, function () {
     console.log("server is started");
