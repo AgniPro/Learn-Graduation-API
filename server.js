@@ -61,7 +61,8 @@ const userSchema = new mongoose.Schema({
     },
   password: String,
   googleId: String,
-  jwtToken:String
+  jwtToken:String,
+  username:String
 }, {
   timestamps: true
 });
@@ -92,7 +93,7 @@ passport.use(new GoogleStrategy({
         User.findOrCreate({
             googleId: profile.id
         }, function (err, user) {
-          User.findOneAndUpdate({"googleId":user.googleId}, {$set:{"jwtToken":generateRefreshToken({ name:profile._json.email}),"email":profile._json.email }}, {new: true}, (err,jwtuser) => {
+          User.findOneAndUpdate({"googleId":user.googleId}, {$set:{"jwtToken":generateRefreshToken({ name:profile._json.email}),"email":profile._json.email, "username":profile._json.email }}, {new: true}, (err,jwtuser) => {
             if (err) {
               res.status(501).json(err);
             }else{
