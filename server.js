@@ -328,7 +328,6 @@ app.get("/", function (req, res){
       }
   });
 });
-
 app.get("/dashboard",authenticateToken,  (req, res)=> {
       const username = new RegExp(escapeRegex(req.jwtuser.name), 'gi');
       Post.find({ "author": username }, function (err, posts) {
@@ -343,12 +342,15 @@ app.get("/dashboard",authenticateToken,  (req, res)=> {
           }
       }).sort({
           _id: -1
-      }).limit(6);
+      });
 });
-
-
 app.post("/", authenticateToken, async function(req, res) {
   try {
+    let tags = req.body.tags;
+    let tagsArray = tags.split(',').map(tag => tag.trim());
+    let categories = req.body.categories;
+    let categoriesArray = categories.split(',').map(category => category.trim());
+
     const post = new Post({
         author: req.jwtuser.name,
         url: req.body.url,
@@ -356,8 +358,8 @@ app.post("/", authenticateToken, async function(req, res) {
         discription: req.body.discription,
         image: req.body.image,
         content: req.body.content,
-        categories:req.body.categories,
-        tags:req.body.tags
+        categories:categoriesArray,
+        tags:tagsArray
     });
     await post.save();
     res.status(200).json("Post has been created.");
@@ -371,10 +373,12 @@ app.post("/", authenticateToken, async function(req, res) {
     }
   }
 });
-
-
 app.put("/:postUrl", authenticateToken, function (req, res) {
-  const uPost = { "content": req.body.content, "discription": req.body.discription, "title": req.body.title, "image": req.params.image, "categories": req.params.categories, "tags": req.params.tags }
+  let tags = req.body.tags;
+  let tagsArray = tags.split(',').map(tag => tag.trim());
+  let categories = req.body.categories;
+  let categoriesArray = categories.split(',').map(category => category.trim());
+  const uPost = { "content": req.body.content, "discription": req.body.discription,"title": req.body.title,"image": req.body.image,"categories": categoriesArray,"tags": tagsArray}
   const postid = req.params.postUrl;
   Post.findOneAndUpdate({ "url": postid }, { $set: uPost }, { new: true }, (err, doc) => {
     if (err) {
@@ -383,7 +387,7 @@ app.put("/:postUrl", authenticateToken, function (req, res) {
       res.status(200).json("Post has been updated.");
     }
   });
-});    
+});
 
 app.delete("/:postUrl",authenticateToken, function(req,res){
         const postid = req.params.postUrl;
