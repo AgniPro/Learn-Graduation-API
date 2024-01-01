@@ -479,6 +479,89 @@ app.post('/p/:postId/likes', authenticateToken, function (req, res) {
   });
 });
 
+
+// mocktest functions
+
+const QuestionSchema = new mongoose.Schema({
+  qnumber: {
+    type: Number,
+    required: true,
+    unique: true
+  },
+  title: {
+    type: String,
+    required: true
+  },
+  option1: {
+    type: String,
+    required: true
+  },
+  option2: {
+    type: String,
+    required: true
+  },
+  option3: {
+    type: String,
+    required: true
+  },
+  option4: {
+    type: String,
+    required: true
+  },
+  correctoption: {
+    type: Number,
+    required: true
+  }
+});
+
+const TestSchema = new mongoose.Schema({
+  testName: {
+    type: String,
+    required: true
+  },
+  questions: [QuestionSchema]
+});
+
+const mockTest = mongoose.model('mockTest', TestSchema);
+
+app.get('/mocktest/:testname', async (req, res) => {
+  const reqMockTest = req.params.testname;
+  try {
+    const questions = await mockTest.find({ testName: reqMockTest });
+    res.status(200).json(questions);
+  } catch (err) {
+    res.status(400).send(err);
+  }
+});
+
+app.post('/mocktest', async (req, res) => {
+  const { testName, questions } = req.body;
+  
+  const test = new mockTest({
+    testName,
+    questions: JSON.parse(questions)
+  });
+
+  try {
+    const savedTest = await test.save();
+    res.status(200).json(savedTest);
+  } catch (err) {
+    res.status(400).send(err);
+  }
+});
+
+app.get("/all-mocktest", function (req, res) {
+  const skip = req.query.skip ? Number(req.query.skip) : 0;
+  
+  mockTest.find({}, { testName: 1, _id: 0 }, function (err, articles) {
+    if (err) {
+      console.log(err);
+    } else {
+      res.send(articles);
+    }
+  }).skip(skip).limit(6);
+});
+
 // some functions
 function escapeRegex(text) {
     return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
