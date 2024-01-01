@@ -479,7 +479,6 @@ app.post('/p/:postId/likes', authenticateToken, function (req, res) {
   });
 });
 
-
 // mocktest functions
 
 const QuestionSchema = new mongoose.Schema({
@@ -550,7 +549,7 @@ app.post('/mocktest', async (req, res) => {
   }
 });
 
-app.get("/all-mocktest", function (req, res) {
+app.get("/mocktest", function (req, res) {
   const skip = req.query.skip ? Number(req.query.skip) : 0;
   
   mockTest.find({}, { testName: 1, _id: 0 }, function (err, articles) {
