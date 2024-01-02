@@ -90,22 +90,31 @@ passport.use(new GoogleStrategy({
   passReqToCallback: true
 },
   function (request, accessToken, refreshToken, profile, cb) {
-    User.findOrCreate({
-      googleId: profile.id
-    }, function (err, user) {
-      User.findOneAndUpdate({ "googleId": user.googleId }, { $set: { "jwtToken": generateRefreshToken({ name: profile._json.email }), "email": profile._json.email, "username": profile._json.email } }, { new: true }, (err, jwtuser) => {
-        if (err) {
-          res.status(501).json(err);
-        } else {
-          return cb(err, jwtuser);
-        }
+    User.findOne({ email: profile._json.email }, function (err, user) {
+      if (err) {
+        return cb(err);
       }
-      )
-
+      if (user) {
+        user.googleId = profile.id;
+        user.jwtToken = generateRefreshToken({ name: profile._json.email });
+        user.username = profile._json.email;
+        user.save(function(err) {
+          if (err) {
+            return cb(err);
+          }
+          return cb(null, user);
+        });
+      } else {
+        User.create({ email: profile._json.email, googleId: profile.id, jwtToken: generateRefreshToken({ name: profile._json.email }), username: profile._json.email }, function (err, user) {
+          if (err) {
+            return cb(err);
+          }
+          return cb(null, user);
+        });
+      }
     });
   }
 ));
-
 // auth section
 
 function generateAccessToken(ffuser) {
