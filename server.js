@@ -14,6 +14,7 @@ const jwt = require("jsonwebtoken")
 const app = express();
 
 app.use(cookieParser());
+app.enable('trust proxy');
 const cors = require('cors');
 app.use(cors({ origin:process.env.CLIENTURL, 
     credentials: true
