@@ -125,7 +125,7 @@ app.get("/auth/google",
     }));
 
 app.get('/auth/google/success',
-    passport.authenticate('google', { failureRedirect:`${process.env.CLIENTURL}`}),
+    passport.authenticate('google', { failureRedirect:`${process.env.CLIENTURL}/error`}),
     (req, res) => {
         const email = req.user.email;
         User.findOne({ email: email }, function (err, fuser) {
