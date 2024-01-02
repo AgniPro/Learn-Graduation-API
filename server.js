@@ -118,13 +118,13 @@ function authenticateToken(req, res, next) {
   });
 }
 
-app.get("/auth/google",
+app.get("/aut/google",
     passport.authenticate("google", {
         scope: ["email", "profile"]
     }));
 
 app.get('/auth/google/success',
-    passport.authenticate('google', { failureRedirect: '/login'}),
+    passport.authenticate('google', { failureRedirect:`${process.env.CLIENTURL}`}),
     (req, res) => {
         const email = req.user.email;
         User.findOne({ email: email }, function (err, fuser) {
