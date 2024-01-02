@@ -22,11 +22,10 @@ app.use(cors({ origin:process.env.CLIENTURL,
 app.use(express.static("public"));
 app.set('view engine', 'ejs');
 
-app.use(express.json());
+app.use(express.json({ limit: '5mb' }));
 
-app.use(bodyParser.urlencoded({
-    extended: true
-}));
+app.use(bodyParser.json({ limit: '5mb' }));
+app.use(bodyParser.urlencoded({ limit: '5mb', extended: true }));
 
 app.use(session({
     secret: process.env.SECRET,
@@ -510,7 +509,10 @@ const QuestionSchema = new mongoose.Schema({
   correctoption: {
     type: Number,
     required: true
-  }
+  },
+  passage: {
+    type: String
+  },
 });
 
 const TestSchema = new mongoose.Schema({
