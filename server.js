@@ -18,15 +18,11 @@ const cors = require('cors');
 app.use(cors({ origin:process.env.CLIENTURL, 
     credentials: true
 }));
-
 app.use(express.static("public"));
 app.set('view engine', 'ejs');
-
 app.use(express.json({ limit: '5mb' }));
-
 app.use(bodyParser.json({ limit: '5mb' }));
 app.use(bodyParser.urlencoded({ limit: '5mb', extended: true }));
-
 app.use(session({
     secret: process.env.SECRET,
     resave: false,
@@ -38,7 +34,6 @@ app.use(session({
         sameSite:"none"
     } //1 hour
 }));
-
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -484,7 +479,6 @@ const QuestionSchema = new mongoose.Schema({
   qnumber: {
     type: Number,
     required: true,
-    unique: true
   },
   title: {
     type: String,
@@ -518,7 +512,8 @@ const QuestionSchema = new mongoose.Schema({
 const TestSchema = new mongoose.Schema({
   testName: {
     type: String,
-    required: true
+    required: true,
+    unique: true
   },
   questions: [QuestionSchema]
 });
@@ -562,6 +557,7 @@ app.get("/mocktest", function (req, res) {
     }
   }).skip(skip).limit(6);
 });
+
 
 // some functions
 function escapeRegex(text) {
