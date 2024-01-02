@@ -118,7 +118,7 @@ function authenticateToken(req, res, next) {
   });
 }
 
-app.get("/aut/google",
+app.get("/auth/google",
     passport.authenticate("google", {
         scope: ["email", "profile"]
     }));
