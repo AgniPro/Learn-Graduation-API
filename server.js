@@ -14,27 +14,32 @@ const jwt = require("jsonwebtoken")
 const app = express();
 
 app.use(cookieParser());
-app.enable('trust proxy');
 const cors = require('cors');
-app.use(cors({ origin:process.env.CLIENTURL, 
-    credentials: true
+app.use(cors({
+  origin: process.env.CLIENTURL,
+  credentials: true
 }));
+
 app.use(express.static("public"));
 app.set('view engine', 'ejs');
+
 app.use(express.json({ limit: '5mb' }));
+
 app.use(bodyParser.json({ limit: '5mb' }));
 app.use(bodyParser.urlencoded({ limit: '5mb', extended: true }));
+
 app.use(session({
-    secret: process.env.SECRET,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-        maxAge: 60 * 60 * 1000,
-        secure:true,
-        domain:".learngraduation.web.app",
-        sameSite:"none"
-    } //1 hour
+  secret: process.env.SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    maxAge: 60 * 60 * 1000,
+    secure: true,
+    domain: ".learngraduation.web.app",
+    sameSite: "none"
+  } //1 hour
 }));
+
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -43,21 +48,21 @@ mongoose.connect(process.env.DB_NAME);
 
 const userSchema = new mongoose.Schema({
   email: {
-      type: String,
-      trim: true,
-      lowercase: true,
-      unique: true,
-      validate: {
-        validator: function(v) {
-          return /^[\w-]+(\.[\w-]+)*@gmail\.com$/.test(v);
-        },
-        message: `Not a valid Gmail address!`
+    type: String,
+    trim: true,
+    lowercase: true,
+    unique: true,
+    validate: {
+      validator: function (v) {
+        return /^[\w-]+(\.[\w-]+)*@gmail\.com$/.test(v);
       },
+      message: `Not a valid Gmail address!`
     },
+  },
   password: String,
   googleId: String,
-  jwtToken:String,
-  username:String
+  jwtToken: String,
+  username: String
 }, {
   timestamps: true
 });
@@ -70,34 +75,35 @@ const User = new mongoose.model("User", userSchema);
 passport.use(User.createStrategy());
 
 passport.serializeUser(function (user, done) {
-    done(null, user.id);
+  done(null, user.id);
 });
 passport.deserializeUser(function (id, done) {
-    User.findById(id, function (err, user) {
-        done(err, user);
-    });
+  User.findById(id, function (err, user) {
+    done(err, user);
+  });
 });
 
 passport.use(new GoogleStrategy({
-        clientID: process.env.CLIENT_ID,
-        clientSecret: process.env.CLIENT_SECRET,
-        callbackURL: process.env.CALLBACK_URL,
-        passReqToCallback: true
-    },
-    function (request, accessToken, refreshToken, profile, cb) {
-        User.findOrCreate({
-            googleId: profile.id
-        }, function (err, user) {
-          User.findOneAndUpdate({"googleId":user.googleId}, {$set:{"jwtToken":generateRefreshToken({ name:profile._json.email}),"email":profile._json.email, "username":profile._json.email }}, {new: true}, (err,jwtuser) => {
-            if (err) {
-              res.status(501).json(err);
-            }else{
-              return cb(err,jwtuser);
-            }}
-          )
-            
-        });
-    }
+  clientID: process.env.CLIENT_ID,
+  clientSecret: process.env.CLIENT_SECRET,
+  callbackURL: process.env.CALLBACK_URL,
+  passReqToCallback: true
+},
+  function (request, accessToken, refreshToken, profile, cb) {
+    User.findOrCreate({
+      googleId: profile.id
+    }, function (err, user) {
+      User.findOneAndUpdate({ "googleId": user.googleId }, { $set: { "jwtToken": generateRefreshToken({ name: profile._json.email }), "email": profile._json.email, "username": profile._json.email } }, { new: true }, (err, jwtuser) => {
+        if (err) {
+          res.status(501).json(err);
+        } else {
+          return cb(err, jwtuser);
+        }
+      }
+      )
+
+    });
+  }
 ));
 
 // auth section
@@ -105,8 +111,8 @@ passport.use(new GoogleStrategy({
 function generateAccessToken(ffuser) {
   return jwt.sign(ffuser, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '360s' })
 }
-function generateRefreshToken(ffuser){
-  return jwt.sign(ffuser, process.env.REFRESH_TOKEN_SECRET ,{ expiresIn: '1800s' })
+function generateRefreshToken(ffuser) {
+  return jwt.sign(ffuser, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1800s' })
 }
 
 function authenticateToken(req, res, next) {
@@ -120,22 +126,22 @@ function authenticateToken(req, res, next) {
 }
 
 app.get("/auth/google",
-    passport.authenticate("google", {
-        scope: ["email", "profile"]
-    }));
+  passport.authenticate("google", {
+    scope: ["email", "profile"]
+  }));
 
 app.get('/auth/google/success',
-    passport.authenticate('google', { failureRedirect:`${process.env.CLIENTURL}/error`}),
-    (req, res) => {
-        const email = req.user.email;
-        User.findOne({ email: email }, function (err, fuser) {
-          if (err) {
-            res.status(501).json(err);
-          } else {
-            res.redirect(`${process.env.CLIENTURL}?token=${fuser.jwtToken}`);
-          }
-        });
-    }
+  passport.authenticate('google', { failureRedirect: `${process.env.CLIENTURL}/error`}),
+  (req, res) => {
+    const email = req.user.email;
+    User.findOne({ email: email }, function (err, fuser) {
+      if (err) {
+        res.status(501).json(err);
+      } else {
+        res.redirect(`${process.env.CLIENTURL}?token=${fuser.jwtToken}`);
+      }
+    });
+  }
 );
 
 app.get("/logout", function (req, res) {
@@ -157,7 +163,7 @@ app.get("/logout", function (req, res) {
 
 app.post("/register", function (req, res) {
   User.register(
-    { username: req.body.username,email: req.body.username},
+    { username: req.body.username, email: req.body.username },
     req.body.password,
     function (err, user) {
       if (err) {
@@ -169,7 +175,7 @@ app.post("/register", function (req, res) {
           res.status(500).json({ message: 'Internal Server Error.' });
         }
       } else {
-        res.status(200).json({message:"User has been created."});
+        res.status(200).json({ message: "User has been created." });
       }
     }
   );
@@ -185,24 +191,25 @@ app.post("/login", async function (req, res) {
     } else {
       passport.authenticate("local", function (err, user, info) {
         if (err) {
-          res.status(400).json({loggedIn: false,message: "something went wrong"});
+          res.status(400).json({ loggedIn: false, message: "something went wrong" });
         } else if (!user) {
-          res.status(401).json({loggedIn: false,message: "Incorrect email or password"});
+          res.status(401).json({ loggedIn: false, message: "Incorrect email or password" });
         } else {
           req.logIn(user, function (err) {
             if (err) {
-              res.status(400).json({loggedIn: false,message: "Something went wrong"});
+              res.status(400).json({ loggedIn: false, message: "Something went wrong" });
             } else {
               const ffuser = { name: user.username }
               const accessToken = generateAccessToken(ffuser)
               const refreshToken = generateRefreshToken(ffuser)
               req.session.user = { id: user._id, name: user.username };
-              User.findOneAndUpdate({"username":user.username}, {$set:{"jwtToken": refreshToken }}, {new: true}, (err) => {
+              User.findOneAndUpdate({ "username": user.username }, { $set: { "jwtToken": refreshToken } }, { new: true }, (err) => {
                 if (err) {
                   res.status(501).json(err);
-                }else{
-                  res.json({ loggedIn: true,message: "Succesfully Login",accessToken:accessToken,refreshToken:refreshToken ,user:user.username?.replace("@gmail.com", "")});
-                }}
+                } else {
+                  res.json({ loggedIn: true, message: "Succesfully Login", accessToken: accessToken, refreshToken: refreshToken, user: user.username?.replace("@gmail.com", "") });
+                }
+              }
               )
             }
           });
@@ -211,7 +218,7 @@ app.post("/login", async function (req, res) {
     }
   } catch (err) {
     console.log(err);
-    res.status(500).send({message:"An error occurred"});
+    res.status(500).send({ message: "An error occurred" });
   }
 });
 
@@ -235,9 +242,9 @@ app.get('/check-auth', (req, res) => {
           const accessToken = generateAccessToken({ name: user.name });
           User.findOneAndUpdate({ "username": user.name }, { $set: { "jwtToken": newRefreshToken } }, { new: true }, (err) => {
             if (err) {
-              res.status(501).json({message:err});
+              res.status(501).json({ message: err });
             } else {
-              res.json({authenticated: true, accessToken: accessToken, refreshToken:newRefreshToken, user: user.name?.replace("@gmail.com", "") });
+              res.json({ authenticated: true, accessToken: accessToken, refreshToken: newRefreshToken, user: user.name?.replace("@gmail.com", "") });
             }
           }
           )
@@ -258,89 +265,92 @@ const Schema = mongoose.Schema;
 const CommentSchema = new Schema({
   author: {
     type: String,
-    require:true
+    require: true
   },
   content: {
-      type: String,
-      required: true
+    type: String,
+    required: true
   }
 }, { timestamps: true });
 
 const postSchema = new Schema({
   url: {
-      type: String,
-      require:true,
-      set: function(v) { return v.replace(/\s+/g, ''); },
-      unique:true
+    type: String,
+    require: true,
+    set: function (v) { return v.replace(/\s+/g, ''); },
+    unique: true
   },
   title: {
-      type: String,
-      required: true
+    type: String,
+    required: true
   },
   discription: { type: String },
   image: {
-      type: String
+    type: String
   },
   content: {
-      type: String,
-      required: true
+    type: String,
+    required: true
   },
   author: {
-      type: String,
-      require:true
+    type: String,
+    require: true
   },
   categories: [{
-      type: String
+    type: String
   }],
   tags: [{
-      type: String
+    type: String
   }],
   comments: [CommentSchema],
   likes: [{
     type: String
-    
+
   }],
-  views: {type: Number, default: 0}
+  views: { type: Number, default: 0 }
 }, { timestamps: true });
 
 const Post = new mongoose.model("Post", postSchema);
 
-app.get("/", function (req, res){
-    const skip= req.query.skip ? Number(req.query.skip) : 0;
-    const limit = skip === 0 ? 4 : 3;
-    Post.find({}, function (err, post) {
-        res.status(200).json(post);
-    }).sort({
-        _id: -1
-    }).skip(skip).limit(limit);
- });
+app.get("/", function (req, res) {
+  const skip = req.query.skip ? Number(req.query.skip) : 0;
+  const limit = skip === 0 ? 4 : 3;
+  Post.find({}, function (err, post) {
+    res.status(200).json(post);
+  }).sort({
+    _id: -1
+  }).skip(skip).limit(limit);
+});
 
- app.get("/popularpost", function (req, res) {
-  Post.find({}, 'title discription image createdAt updatedAt url categories').sort({views: -1}).limit(4).exec(function (err, post) {
-      if (post == null) {
-          res.sendStatus(400);
-      } else {
-          res.status(200).send(post);
-      }
+app.get("/popularpost", function (req, res) {
+  Post.find({}, 'title discription image createdAt updatedAt url categories').sort({ views: -1 }).limit(4).exec(function (err, post) {
+    if (post == null) {
+      res.sendStatus(400);
+    } else {
+      res.status(200).send(post);
+    }
   });
 });
-app.get("/dashboard",authenticateToken,  (req, res)=> {
-      const username = new RegExp(escapeRegex(req.jwtuser.name), 'gi');
-      Post.find({ "author": username }, function (err, posts) {
-          if (err) {
-              res.status(500).json({ message: "An error occurred" });
-          } else {
-              if (posts.length === 0) {
-                  res.status(204).json({ message: "No posts found" });
-              } else {
-                  res.json(posts);
-              }
-          }
-      }).sort({
-          _id: -1
-      });
+
+app.get("/dashboard", authenticateToken, (req, res) => {
+  const username = new RegExp(escapeRegex(req.jwtuser.name), 'gi');
+  Post.find({ "author": username }, function (err, posts) {
+    if (err) {
+      res.status(500).json({ message: "An error occurred" });
+    } else {
+      if (posts.length === 0) {
+        res.status(204).json({ message: "No posts found" });
+      } else {
+        res.json(posts);
+      }
+    }
+  }).sort({
+    _id: -1
+  });
 });
-app.post("/", authenticateToken, async function(req, res) {
+
+
+app.post("/", authenticateToken, async function (req, res) {
   try {
     let tags = req.body.tags;
     let tagsArray = tags.split(',').map(tag => tag.trim());
@@ -348,14 +358,14 @@ app.post("/", authenticateToken, async function(req, res) {
     let categoriesArray = categories.split(',').map(category => category.trim());
 
     const post = new Post({
-        author: req.jwtuser.name,
-        url: req.body.url,
-        title: req.body.title,
-        discription: req.body.discription,
-        image: req.body.image,
-        content: req.body.content,
-        categories:categoriesArray,
-        tags:tagsArray
+      author: req.jwtuser.name,
+      url: req.body.url,
+      title: req.body.title,
+      discription: req.body.discription,
+      image: req.body.image,
+      content: req.body.content,
+      categories: categoriesArray,
+      tags: tagsArray
     });
     await post.save();
     res.status(200).json("Post has been created.");
@@ -369,12 +379,14 @@ app.post("/", authenticateToken, async function(req, res) {
     }
   }
 });
+
+
 app.put("/:postUrl", authenticateToken, function (req, res) {
   let tags = req.body.tags;
   let tagsArray = tags.split(',').map(tag => tag.trim());
   let categories = req.body.categories;
   let categoriesArray = categories.split(',').map(category => category.trim());
-  const uPost = { "content": req.body.content, "discription": req.body.discription,"title": req.body.title,"image": req.body.image,"categories": categoriesArray,"tags": tagsArray}
+  const uPost = { "content": req.body.content, "discription": req.body.discription, "title": req.body.title, "image": req.body.image, "categories": categoriesArray, "tags": tagsArray }
   const postid = req.params.postUrl;
   Post.findOneAndUpdate({ "url": postid }, { $set: uPost }, { new: true }, (err, doc) => {
     if (err) {
@@ -385,51 +397,52 @@ app.put("/:postUrl", authenticateToken, function (req, res) {
   });
 });
 
-app.delete("/:postUrl",authenticateToken, function(req,res){
-        const postid = req.params.postUrl;
-        Post.findOneAndDelete({"url": postid}, (err, doc) => {
-        if (err) {
-            console.log("Something when wrong!");
-        }else{
-            res.status(200).json("Post has been deleted!");
-        }
-        });
+
+app.delete("/:postUrl", authenticateToken, function (req, res) {
+  const postid = req.params.postUrl;
+  Post.findOneAndDelete({ "url": postid }, (err, doc) => {
+    if (err) {
+      console.log("Something when wrong!");
+    } else {
+      res.status(200).json("Post has been deleted!");
+    }
+  });
 });
 
 app.get("/p/:postUrl", function (req, res) {
 
-    const reqPostUrl = req.params.postUrl;
-    Post.findOne({url: reqPostUrl}, function (err, post) {
-        if (post== null) {
-            res.sendStatus(400);
-        }else{
-            post.views += 1;
-            post.save( {
-              timestamps: false
-            });
-            res.status(200).send(post)
-        }
-    });
+  const reqPostUrl = req.params.postUrl;
+  Post.findOne({ url: reqPostUrl }, function (err, post) {
+    if (post == null) {
+      res.status(400).send({ message: "noPost" });
+    } else {
+      post.views += 1;
+      post.save({
+        timestamps: false
+      });
+      res.status(200).send(post)
+    }
+  });
 });
 
 app.get("/search", function (req, res) {
 
-    const key = new RegExp(escapeRegex(req.query.q), 'gi');
-    const skip= req.query.skip ? Number(req.query.skip) : 0;
-    Post.find({
-        title: key
-    }, function (err, articles) {
-        if (err) {
-            console.log(err);
-        } else {
-            res.send(articles);
-        }
-    }).skip(skip).limit(6);
+  const key = new RegExp(escapeRegex(req.query.q), 'gi');
+  const skip = req.query.skip ? Number(req.query.skip) : 0;
+  Post.find({
+    title: key
+  }, function (err, articles) {
+    if (err) {
+      console.log(err);
+    } else {
+      res.send(articles);
+    }
+  }).skip(skip).limit(6);
 
 });
 
 //  Commment section
-app.post('/p/:postId/comments', authenticateToken, function(req, res) {
+app.post('/p/:postId/comments', authenticateToken, function (req, res) {
   const comment = {
     content: req.body.content,
     author: req.jwtuser.name
@@ -448,7 +461,7 @@ app.post('/p/:postId/comments', authenticateToken, function(req, res) {
 // likes
 app.post('/p/:postId/likes', authenticateToken, function (req, res) {
   const email = req.jwtuser.name;
-  
+
   Post.findOne({ _id: req.params.postId }, function (err, post) {
     if (post.likes.includes(email)) {
       Post.updateOne({ _id: req.params.postId }, { $pull: { likes: email } }, {
@@ -559,14 +572,13 @@ app.get("/mocktest", function (req, res) {
   }).skip(skip).limit(6);
 });
 
-
 // some functions
 function escapeRegex(text) {
-    return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+  return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
 };
 
 
 app.listen(3000, function () {
-    console.log("server is started");
+  console.log("server is started");
 
 });
