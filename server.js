@@ -609,6 +609,14 @@ app.post('/mocktest-result', async (req, res) => {
     res.status(400).send(err);
   }
 });
+app.get('/mocktest-result', async (req, res) => {
+  try {
+    const results = await Result.find();
+    res.status(200).json(results);
+  } catch (err) {
+    res.status(400).send(err);
+  }
+});
 
 // some functions
 function escapeRegex(text) {
