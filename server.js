@@ -580,6 +580,35 @@ app.get("/mocktest", function (req, res) {
     }
   }).skip(skip).limit(6);
 });
+const ResultSchema = new mongoose.Schema({
+  username: String,
+  results: [{
+    sectionName: String,
+    totalQuestions: Number,
+    attempted: Number,
+    correct: Number,
+    score: Number,
+    accuracy: Number
+  }]
+});
+
+const Result = mongoose.model('Result', ResultSchema);
+
+app.post('/mocktest-result', async (req, res) => {
+  const { username, results } = req.body;
+
+  const result = new Result({
+    username,
+    results
+  });
+
+  try {
+    const savedResult = await result.save();
+    res.status(200).json(savedResult);
+  } catch (err) {
+    res.status(400).send(err);
+  }
+});
 
 // some functions
 function escapeRegex(text) {
