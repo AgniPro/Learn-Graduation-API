@@ -33,11 +33,11 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    maxAge: 60 * 60 * 1000,
+    maxAge: 10 * 60 * 60 * 1000,
     secure: true,
     domain: ".learngraduation.web.app",
     sameSite: "none"
-  } //1 hour
+  } //10 hour
 }));
 
 app.use(passport.initialize());
@@ -118,10 +118,10 @@ passport.use(new GoogleStrategy({
 // auth section
 
 function generateAccessToken(ffuser) {
-  return jwt.sign(ffuser, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '360s' })
+  return jwt.sign(ffuser, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '10h' })
 }
 function generateRefreshToken(ffuser) {
-  return jwt.sign(ffuser, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1800s' })
+  return jwt.sign(ffuser, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '7d' })
 }
 
 function authenticateToken(req, res, next) {
