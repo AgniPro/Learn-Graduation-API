@@ -321,14 +321,19 @@ const postSchema = new Schema({
 
 const Post = new mongoose.model("Post", postSchema);
 
-app.get("/", function (req, res) {
-  const skip = req.query.skip ? Number(req.query.skip) : 0;
+app.get("/", async (req, res) => {
+  const { skip: skipString } = req.query;
+  const skip = skipString ? Number(skipString) : 0;
   const limit = skip === 0 ? 4 : 3;
-  Post.find({}, function (err, post) {
-    res.status(200).json(post);
-  }).sort({
-    _id: -1
-  }).skip(skip).limit(limit);
+  try {
+    const posts = await Post.find({}, 'title description image createdAt updatedAt url categories')
+      .sort({ _id: -1 })
+      .skip(skip)
+      .limit(limit);
+    res.status(200).json(posts);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 });
 
 app.get("/popularpost", function (req, res) {
