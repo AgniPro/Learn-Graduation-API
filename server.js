@@ -326,7 +326,7 @@ app.get("/", async (req, res) => {
   const skip = skipString ? Number(skipString) : 0;
   const limit = skip === 0 ? 4 : 3;
   try {
-    const posts = await Post.find({}, 'title description image createdAt updatedAt url categories comments likes views tags')
+    const posts = await Post.find({}, 'title discription image createdAt updatedAt url categories comments likes views tags')
       .sort({ _id: -1 })
       .skip(skip)
       .limit(limit);
