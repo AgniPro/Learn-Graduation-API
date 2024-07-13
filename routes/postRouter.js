@@ -4,13 +4,13 @@ const { createPost, getPost, updatePost, deletePost, postLike, postComment, getP
 const { isAthenicated ,authorizeRole} = require('../middlewares/auth.js');
 
 postRouter.get('/get-posts', getPosts);
-postRouter.get('/get-post/:postID', getPost);
+postRouter.get('/p/:postID', getPost);
 postRouter.get('/popular-posts', popularPost);
 postRouter.get('/search-posts', searchPost);
 postRouter.post('/create-post', isAthenicated,authorizeRole("admin"), createPost);
 postRouter.put('/update-post', isAthenicated,authorizeRole("admin"), updatePost);
 postRouter.delete('/delete-post', isAthenicated,authorizeRole("admin"), deletePost);
-postRouter.put('/post-comment', isAthenicated, postComment);
-postRouter.put('/post-like', isAthenicated, postLike);
+postRouter.put('/p/:postId/comment', isAthenicated, postComment);
+postRouter.put('/p/:postId/like', isAthenicated, postLike);
 
 module.exports = postRouter;

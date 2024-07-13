@@ -5,12 +5,12 @@ const {authorizeRole,isAthenicated}= require("../middlewares/auth");
 
 userRouter.post("/register", registrationUser);
 userRouter.post("/activate-user", activateUser);
-userRouter.get("/me",getUserInfo);
+userRouter.get("/me",isAthenicated,getUserInfo);
 userRouter.post("/login",loginUser);
 userRouter.post("/logout",isAthenicated,logoutUser);
 userRouter.get("/refresh",isAthenicated,updateAccessToken);
 userRouter.post("/social-auth",socialAuth);
-userRouter.put("/update-userr-info",isAthenicated,updateUserInfo);
+userRouter.put("/update-user-info",isAthenicated,updateUserInfo);
 userRouter.put("/update-user-password",isAthenicated,updatePassword);
 userRouter.put("/update-user-avatar",isAthenicated,updateProfilePicture);
 userRouter.get("/get-users",isAthenicated,authorizeRole("admin"),getAllUsers);

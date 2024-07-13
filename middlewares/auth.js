@@ -22,7 +22,7 @@ const isAthenicated = async (req, res, next) => {
 // authorize user role
 const authorizeRole = (...roles) => {
     return (req, res, next) => {
-        if (!roles.includes(req.user.rol||'')) {
+        if (!roles.includes(req.user.role||'')) {
             return next(new ErrorHandler(`Role ${req.user?.role} is not allowed to access this`, 403));
         }
         next();

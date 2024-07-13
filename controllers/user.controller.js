@@ -6,7 +6,7 @@ const bcrypt = require("bcryptjs");
 const ejs = require("ejs");
 const path = require("path");
 const sendMail = require("../utils/sendMail.js");
-const { accessTokenOptions, refressTokenOptions, sendToken, } = require("../utils/jwt.js");
+const { accessTokenOptions, refreshTokenOptions, sendToken, } = require("../utils/jwt.js");
 const { redis } = require("../utils/redis.js");
 const cloudinary = require("cloudinary");
 
@@ -130,10 +130,10 @@ const loginUser = async (req, res, next) => {
 // logout user
 const logoutUser = async (req, res, next) => {
   try {
-    res.cookie("access_token", "", { maxAge: 1 });
-    res.cookie("refresh_token", "", { maxAge: 1 });
     const userID = req.user?._id || "";
     await redis.del(userID);
+    res.cookie("access_token", "", { maxAge: 1 });
+    res.cookie("refresh_token", "", { maxAge: 1 });
     res.status(200).json({
       succes: true,
       message: "Logged out succesfully",
@@ -189,7 +189,7 @@ const socialAuth = async (req, res, next) => {
   try {
     const { name, email, avatar } = req.body;
     let existUser = await user.findOne({ email });
-    if (!user) {
+    if (!existUser) {
       let newUser = await user.create({ email, name, avatar: { url: avatar } });
       delete newUser?.password;
       sendToken(newUser, 200, res);
@@ -208,16 +208,16 @@ const updateUserInfo = async (req, res, next) => {
   try {
     const { name } = req.body;
     const userId = req.user?._id;
-    const user = await user.findByIdAndUpdate(userId);
-    if (name && user) {
-      user.name = name;
+    const userData = await user.findByIdAndUpdate(userId);
+    if (name && userData) {
+      userData.name = name;
     }
-    await user?.save();
-    await redis.set(userId, JSON.stringify(user));
+    await userData?.save();
+    await redis.set(userId, JSON.stringify(userData));
     res.status(200).json({
       success: true,
       message: "User information updated",
-      user,
+      userData,
     });
   }
   catch (error) {

@@ -4,8 +4,9 @@ const { Schema } = mongoose;
 
 const CommentSchema = new Schema({
   author: {
-    type: String,
-    require: true
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'user',
+    required: true
   },
   content: {
     type: String,
@@ -24,7 +25,7 @@ const postSchema = new Schema({
     type: String,
     required: true
   },
-  discription: { type: String },
+  description: { type: String },
   image: {
     type: String
   },
@@ -33,8 +34,9 @@ const postSchema = new Schema({
     required: true
   },
   author: {
-    type: String,
-    require: true
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'user',
+    required: true
   },
   categories: [{
     type: String

@@ -7,6 +7,7 @@ const cookieParser = require("cookie-parser");
 const mongoose = require("mongoose");
 const userRouter = require("./routes/userRouter");
 const postRouter = require("./routes/postRouter");
+const ErrorHandler = require("./utils/ErrorHandler");
 const app = express();
 
 app.use(express.urlencoded({ extended: true }));
@@ -40,6 +41,7 @@ cloudinary.config({
     api_key: process.env.CLOUD_API_KEY,
     api_secret: process.env.CLOUD_SECRET_KEY,
 });
+
 // routes
 app.use(
     "/api",
@@ -52,7 +54,6 @@ app.get("/test", (req, res, next) => {
         message: "API response",
     });
 });
-
 
 app.listen(process.env.PORT || 3000, () => {
     console.log("Server is running on port " + process.env?.PORT || 3000);

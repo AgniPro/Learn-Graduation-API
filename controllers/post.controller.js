@@ -4,17 +4,26 @@ const Post = require("../models/post.model.js");
 const ErrorHandler = require("../utils/ErrorHandler.js");
 
 
+
 const getPosts = async (req, res, next) => {
     try {
         const { skip: skipString } = req.query;
         const skip = skipString ? Number(skipString) : 0;
+        if (skip === 0) {
+            const redisPostCatch = await redis.get("postWithoutSkip");
+            const posts = JSON.parse(redisPostCatch);
+            if (redisPostCatch && posts.length > 0 ) {
+                return res.status(200).json(posts);
+            }
+        }
         const limit = skip === 0 ? 4 : 3;
-        const posts = await Post.find({}, 'title description image createdAt updatedAt url categories comments likes views tags')
-            .sort({ _id: -1 })
+        const posts = await Post.find({}, 'title description image createdAt updatedAt url categories comments likes views tags').populate('author', '_id').populate('comments.author', '_id name avatar').sort({ _id: -1 })
             .skip(skip)
             .limit(limit);
-
-        res.status(200).json(posts);
+        if (skip === 0) {
+            await redis.set("postWithoutSkip", JSON.stringify(posts), "EX", 60 * 60 * 24);
+        }
+        return res.status(200).json(posts);
     } catch (err) {
         return next(new ErrorHandler(err.message, 500));
     }
@@ -22,13 +31,19 @@ const getPosts = async (req, res, next) => {
 
 const popularPost = async (req, res, next) => {
     try {
+        const redisPostCatch = await redis.get("popularPost");
+        const popularPosts = JSON.parse(redisPostCatch);
+        if (redisPostCatch && popularPosts.length > 0) {
+            return res.status(200).json(popularPosts);
+        }
         const posts = await Post.find({}, 'title description image createdAt updatedAt url categories comments likes views tags')
             .sort({ views: -1 })
             .limit(4);
         if (posts.length === 0) {
-            res.status(404).json({ message: "No post found" });
+            return res.status(404).json({ message: "No post found" });
         }
-        res.status(200).json(posts);
+        await redis.set("popularPost", JSON.stringify(posts), "EX", 60 * 60 * 24);
+        return res.status(200).json(posts);
     } catch (err) {
         return next(new ErrorHandler(err.message, 500));
     }
@@ -42,24 +57,24 @@ const createPost = async (req, res, next) => {
         let categoriesArray = categories.split(',').map(category => category.trim());
 
         const post = new Post({
-            author: req.jwtuser.name,
+            author:req.user._id,
             url: req.body.url,
             title: req.body.title,
-            discription: req.body.discription,
+            description: req.body.description,
             image: req.body.image,
             content: req.body.content,
             categories: categoriesArray,
             tags: tagsArray
         });
         await post.save();
-        res.status(200).json("Post has been created.");
+       return res.status(200).json("Post has been created.");
     } catch (err) {
         if (err.name === 'MongoError' && err.code === 11000) {
-            res.status(400).json({ error: 'Duplicate key error. The URL already exists.' });
+           return res.status(400).json({ error: 'Duplicate key error. The URL already exists.' });
         } else if (err.name === 'ValidationError') {
-            res.status(400).json({ error: 'Validation Error. Please check your input.' });
+           return res.status(400).json({ error: 'Validation Error. Please check your input.' });
         } else {
-            res.status(500).json({ error: 'Internal Server Error.' });
+           return res.status(500).json({ error: 'Internal Server Error.' });
         }
     }
 };
@@ -70,13 +85,13 @@ const updatePost = async (req, res, next) => {
         let tagsArray = tags.split(',').map(tag => tag.trim());
         let categories = req.body.categories;
         let categoriesArray = categories.split(',').map(category => category.trim());
-        const uPost = { "content": req.body.content, "discription": req.body.discription, "title": req.body.title, "image": req.body.image, "categories": categoriesArray, "tags": tagsArray }
+        const uPost = { "content": req.body.content, "description": req.body.description, "title": req.body.title, "image": req.body.image, "categories": categoriesArray, "tags": tagsArray }
         const postid = req.params.postUrl;
         Post.findOneAndUpdate({ "url": postid }, { $set: uPost }, { new: true }, (err, doc) => {
             if (err) {
-                res.status(501).json(err);
+               return res.status(501).json(err);
             } else {
-                res.status(200).json("Post has been updated.");
+               return res.status(200).json("Post has been updated.");
             }
         });
     } catch (err) {
@@ -94,19 +109,25 @@ const deletePost = async (req, res, next) => {
         return next(new ErrorHandler(err.message, 500));
     }
 }
+
 const getPost = async (req, res, next) => {
     try {
         const postid = req.params.postID;
-        const post = await Post.findOne({
-            "url":
-                postid
-        });
+        // Find the post by ID and increment the views count atomically without updating the timestamp
+        const post = await Post.findOneAndUpdate(
+            { "url": postid },
+            { $inc: { "views": 1 } },
+            { new: true, timestamps: false } 
+        ).populate('author', 'name avatar').populate({
+            path: 'comments.author',
+            select: 'name avatar'});
+
         res.status(200).json(post);
-    }
-    catch (err) {
+    } catch (err) {
         return next(new ErrorHandler(err.message, 500));
     }
 }
+
 const searchPost = async (req, res, next) => {
     try {
 
@@ -125,8 +146,7 @@ const searchPost = async (req, res, next) => {
 // comment
 const postComment = async (req, res, next) => {
     try {
-        const postid = req.params.postID;
-        const comment = { content: req.body.content, author: req.jwtuser.name };
+        const comment = { content: req.body.content, author:req.user._id, };
         Post.updateOne({ _id: req.params.postId }, { $push: { comments: comment } }, {
             timestamps: false
         })
@@ -143,7 +163,7 @@ const postComment = async (req, res, next) => {
 }
 // like
 const postLike = async (req, res, next) => {
-    const email = req.jwtuser.name;
+    const email = req.user.email;
 
     await Post.findOne({ _id: req.params.postId }, function (err, post) {
         if (post.likes.includes(email)) {
