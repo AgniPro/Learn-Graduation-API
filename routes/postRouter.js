@@ -1,16 +1,16 @@
-const express = require('express');
+import express from 'express';
 const postRouter = express.Router();
-const { createPost, getPost, updatePost, deletePost, postLike, postComment, getPosts, popularPost, searchPost } = require('../controllers/post.controller.js');
-const { isAthenicated ,authorizeRole} = require('../middlewares/auth.js');
+import postController from '../controllers/postController.js';
+import {isAuthenticated,authorizeRole} from '../middlewares/auth.js';
 
-postRouter.get('/get-posts', getPosts);
-postRouter.get('/p/:postID', getPost);
-postRouter.get('/popular-posts', popularPost);
-postRouter.get('/search-posts', searchPost);
-postRouter.post('/create-post', isAthenicated,authorizeRole("admin"), createPost);
-postRouter.put('/update-post', isAthenicated,authorizeRole("admin"), updatePost);
-postRouter.delete('/delete-post', isAthenicated,authorizeRole("admin"), deletePost);
-postRouter.put('/p/:postId/comment', isAthenicated, postComment);
-postRouter.put('/p/:postId/like', isAthenicated, postLike);
+postRouter.get('/get-posts', postController.getPosts);
+postRouter.get('/p/:postID', postController.getPost);
+postRouter.get('/popular-posts', postController.popularPost);
+postRouter.get('/search-posts', postController.searchPost);
+postRouter.post('/create-post', isAuthenticated,authorizeRole("admin"), postController.createPost);
+postRouter.put('/update-post', isAuthenticated,authorizeRole("admin"), postController.updatePost);
+postRouter.delete('/delete-post', isAuthenticated,authorizeRole("admin"), postController.deletePost);
+postRouter.put('/p/:postId/comment', isAuthenticated, postController.postComment);
+postRouter.put('/p/:postId/like', isAuthenticated, postController.postLike);
 
-module.exports = postRouter;
+export default postRouter;
