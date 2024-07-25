@@ -22,17 +22,17 @@ const accessTokenAutoRefresh = async (req, res, next) => {
       }
 
       // Access token is expired, make a refresh token request
-      const { newAccessToken, newRefreshToken, newAccessTokenExp, newRefreshTokenExp } = await refreshAccessToken(req, res)
+      const { newAccessToken, newRefreshToken, newAccessTokenExp, newRefreshTokenExp,uid ,isauth} = await refreshAccessToken(req, res)
 
       // set cookies
-      setTokensCookies(res, newAccessToken, newRefreshToken, newAccessTokenExp, newRefreshTokenExp);
+      setTokensCookies(res, newAccessToken, newRefreshToken, newAccessTokenExp, newRefreshTokenExp,uid,isauth);
 
       //  Add the access token to the Authorization header
       req.headers['authorization'] = `Bearer ${newAccessToken}`
     }
     next()
   } catch (error) {
-    console.error('Error adding access token to header:', error.message);
+    console.error('user was Unautherized:', error.message);
     // Handle the error, such as returning an error response or redirecting to the login page
     res.status(401).json({ error: 'Unauthorized', message: 'Access token is missing or invalid' });
   }

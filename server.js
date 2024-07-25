@@ -8,7 +8,7 @@ import passport from 'passport';
 import userRoutes from './routes/userRoutes.js'
 import './config/passport-jwt-strategy.js'
 import setTokensCookies from './utils/setTokensCookies.js';
-import './config/google-strategy.js'    // Added for google auth
+import './config/google-strategy.js';    // Added for google auth
 import postRouter from './routes/postRouter.js';
 
 
@@ -50,7 +50,12 @@ app.get('/auth/google/callback',
 
     // Access user object and tokens from req.user
     const { user, accessToken, refreshToken, accessTokenExp, refreshTokenExp } = req.user;
-    setTokensCookies(res, accessToken, refreshToken, accessTokenExp, refreshTokenExp)
+    const uid = user._id.toHexString();
+    let isauth = 2119518;
+      if (user.role==='admin') {
+        isauth=1415914;
+       }
+    setTokensCookies(res, accessToken, refreshToken, accessTokenExp, refreshTokenExp,uid,isauth);
 
     // Successful authentication, redirect home.
     res.redirect(`${process.env.FRONTEND_HOST}/user/profile`);

@@ -6,7 +6,7 @@ const connectDB = async (DATABASE_URL) => {
       dbName: "passportjsauth"
     }
     await mongoose.connect(DATABASE_URL, DB_OPTIONS)
-    console.log('Connected Successfully...')
+    console.log('DB Connected Successfully...')
   } catch (error) {
     console.log(error)
   }

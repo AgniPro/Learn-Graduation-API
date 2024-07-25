@@ -7,19 +7,19 @@ const refreshAccessToken = async (req, res) => {
   try {
     const oldRefreshToken = req.cookies.refreshToken;
     // Verify Refresh Token is valid or not
-    const { tokenDetails, error } = await verifyRefreshToken(oldRefreshToken)
+    const { tokenDetails, error } = await verifyRefreshToken(oldRefreshToken);
 
     if (error) {
       return res.status(401).send({ status: "failed", message: "Invalid refresh token" });
     }
     // Find User based on Refresh Token detail id 
-    const user = await UserModel.findById(tokenDetails._id)
+    const user = await UserModel.findById(tokenDetails._id);
 
     if (!user) {
       return res.status(404).send({ status: "failed", message: "User not found" });
     }
 
-    const userRefreshToken = await UserRefreshTokenModel.findOne({ userId: tokenDetails._id })
+    const userRefreshToken = await UserRefreshTokenModel.findOne({ userId: tokenDetails._id });
 
     if (oldRefreshToken !== userRefreshToken.token || userRefreshToken.blacklisted) {
       return res.status(401).send({ status: "failed", message: "Unauthorized access" });
@@ -27,11 +27,17 @@ const refreshAccessToken = async (req, res) => {
 
     // Generate new access and refresh tokens
     const { accessToken, refreshToken, accessTokenExp, refreshTokenExp } = await generateTokens(user);
+    let isauth= 2119518;
+    if (user.role==='admin') {
+      isauth=1415914;
+     }
     return {
       newAccessToken: accessToken,
       newRefreshToken: refreshToken,
       newAccessTokenExp: accessTokenExp,
-      newRefreshTokenExp: refreshTokenExp
+      newRefreshTokenExp: refreshTokenExp,
+      uid:user._id.toHexString(),
+      isauth:isauth,
     };
 
   } catch (error) {

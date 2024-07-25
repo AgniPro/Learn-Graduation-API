@@ -7,6 +7,6 @@ const redisClient=()=>{
     }
     throw new Error("Redis connection failed");
 }
-const redis= new Redis(redisClient(),{tls: {rejectUnauthorized: false}});
+const redis= 'new Redis(redisClient(),{tls: {rejectUnauthorized: false}})';
 
 export default redis;

@@ -9,20 +9,23 @@ const CommentSchema = new Schema({
   },
   content: {
     type: String,
-    required: true
+    required: true,
+    trim: true,
   }
 }, { timestamps: true });
 
 const postSchema = new Schema({
   url: {
     type: String,
-    require: true,
+    required: true,
     set: function (v) { return v.replace(/\s+/g, ''); },
-    unique: true
+    unique: true,
+    trim: true,
   },
   title: {
     type: String,
-    required: true
+    required: true,
+    trim: true,
   },
   description: { type: String },
   image: {
@@ -30,7 +33,8 @@ const postSchema = new Schema({
   },
   content: {
     type: String,
-    required: true
+    required: true,
+    trim: true,
   },
   author: {
     type: mongoose.Schema.Types.ObjectId,
@@ -38,15 +42,17 @@ const postSchema = new Schema({
     required: true
   },
   categories: [{
-    type: String
+    type: String,
+    trim: true,
   }],
   tags: [{
-    type: String
+    type: String,
+    trim: true,
   }],
   comments: [CommentSchema],
   likes: [{
-    type: String
-
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'user',
   }],
   views: { type: Number, default: 0 }
 }, { timestamps: true });

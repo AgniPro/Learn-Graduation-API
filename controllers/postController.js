@@ -6,20 +6,10 @@ class postController {
         try {
             const { skip: skipString } = req.query;
             const skip = skipString ? Number(skipString) : 0;
-            if (skip === 0) {
-                const redisPostCatch = await redis.get("postWithoutSkip");
-                const posts = JSON.parse(redisPostCatch);
-                if (redisPostCatch && posts.length > 0) {
-                    return res.status(200).json(posts);
-                }
-            }
             const limit = skip === 0 ? 4 : 3;
             const posts = await Post.find({}, 'title description image createdAt updatedAt url categories comments likes views tags').populate('author', '_id').populate('comments.author', '_id name avatar').sort({ _id: -1 })
                 .skip(skip)
                 .limit(limit);
-            if (skip === 0) {
-                await redis.set("postWithoutSkip", JSON.stringify(posts), "EX", 60 * 60 * 24);
-            }
             return res.status(200).json(posts);
         } catch (err) {
             return next(new ErrorHandler(err.message, 500));
@@ -108,22 +98,31 @@ class postController {
     static getPost = async (req, res, next) => {
         try {
             const postid = req.params.postID;
-            // Find the post by ID and increment the views count atomically without updating the timestamp
             const post = await Post.findOneAndUpdate(
                 { "url": postid },
                 { $inc: { "views": 1 } },
                 { new: true, timestamps: false }
-            ).populate('author', 'name avatar').populate({
-                path: 'comments.author',
-                select: 'name avatar'
-            });
-
-            res.status(200).json(post);
+            ).populate('author', 'name avatar')
+                .populate({
+                    path: 'comments.author',
+                    select: 'name avatar'
+                })
+                .lean(); 
+            if (!post) {
+                return res.status(404).json({ success: false, message: "Post not found" });
+            }
+            const isLiked = post.likes.includes(req.user);
+            const responseData = {
+                ...post,
+                isLiked 
+            };
+            res.status(200).json(responseData);
         } catch (err) {
-            return res.status(404).json({ success:false,message: "Post not found" });
+            console.error(err); // Log the error for debugging purposes
+            return res.status(500).json({ success: false, message: "An error occurred" });
         }
     }
-
+   
     static searchPost = async (req, res, next) => {
         try {
 
@@ -142,16 +141,25 @@ class postController {
     // comment
     static postComment = async (req, res, next) => {
         try {
-            const comment = { content: req.body.content, author: req.user._id, };
-            Post.updateOne({ _id: req.params.postId }, { $push: { comments: comment } }, {
-                timestamps: false
-            })
-                .then(result => {
-                    res.status(200).json('Comment has been added.');
+            const comment = req.body.content
+            if (!comment) {
+                return res.status(500).json('Please write something to comment')
+            }
+            const commentData = { content: req.body.content, author: req.user._id, };
+            const commentRes = await Post.findOneAndUpdate(
+                { _id: req.params.postId },
+                { $push: { comments: commentData } },
+                { new: true, timestamps: false }
+            ).populate({
+                    path: 'comments.author',
+                    select: 'name avatar'
                 })
-                .catch(err => {
-                    res.status(500).json('Error adding comment.');
-                });
+                .lean(); 
+            if (commentRes) {
+                res.status(200).json({ success: true, message: 'Comment has added', comments:commentRes.comments })
+            } else {
+                res.status(500).json({ success: false, message: 'Something went wrong' })
+            }
         }
         catch (err) {
             return next(new ErrorHandler(err.message, 500));
@@ -159,33 +167,32 @@ class postController {
     }
     // like
     static postLike = async (req, res, next) => {
-        const email = req.user.email;
-
-        await Post.findOne({ _id: req.params.postId }, function (err, post) {
-            if (post.likes.includes(email)) {
-                Post.updateOne({ _id: req.params.postId }, { $pull: { likes: email } }, {
-                    timestamps: false
-                })
-                    .then(result => {
-                        res.status(200).json('Like has been removed.');
-                    })
-                    .catch(err => {
-                        res.status(500).json('Error removing like.');
-                    });
-            } else {
-                Post.updateOne({ _id: req.params.postId }, { $push: { likes: email } }, {
-                    timestamps: false
-                })
-                    .then(result => {
-                        res.status(200).json('Like has been added.');
-                    })
-                    .catch(err => {
-                        res.status(500).json('Error adding like.');
-                    });
+        const userID = req.user._id;
+        const postId = req.params.postId;
+        try {
+            const post = await Post.findById(postId);
+            if (!post) {
+                return res.status(404).json({ success: false, message: 'Post not found.' });
             }
-        });
-    }
+            const isLiked = post.likes.includes(userID);
+            const update = isLiked
+                ? { $pull: { likes: userID } } // If liked, remove like
+                : { $addToSet: { likes: userID } }; // If not liked, add like
 
+            Post.updateOne({ _id: postId }, update, { timestamps: false })
+                .then(result => {
+                    const message = isLiked ? 'Like has been removed.' : 'Like has been added.';
+              
+                    res.status(200).json({ success: true, message });
+                })
+                .catch(err => {
+                    res.status(500).json({ message: 'Error updating like.', success: false });
+                });
+
+        } catch (error) {
+            return res.status(500).json("Error on updating like::" + error.message);
+        }
+    };
 };
 
 // some functions

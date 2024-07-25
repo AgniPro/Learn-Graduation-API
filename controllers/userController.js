@@ -152,7 +152,12 @@ class UserController {
       const { accessToken, refreshToken, accessTokenExp, refreshTokenExp } = await generateTokens(user)
 
       // Set Cookies
-      setTokensCookies(res, accessToken, refreshToken, accessTokenExp, refreshTokenExp)
+      const uid= user._id.toHexString();
+      let isauth = 2119518;
+      if (user.role==='admin') {
+        isauth=1415914;
+       }
+      setTokensCookies(res, accessToken, refreshToken, accessTokenExp, refreshTokenExp,uid,isauth);
 
       // Send success response with tokens
       res.status(200).json({
@@ -176,10 +181,10 @@ class UserController {
   static getNewAccessToken = async (req, res) => {
     try {
       // Get new access token using Refresh Token
-      const { newAccessToken, newRefreshToken, newAccessTokenExp, newRefreshTokenExp } = await refreshAccessToken(req, res)
+      const { newAccessToken, newRefreshToken, newAccessTokenExp, newRefreshTokenExp ,uid,isauth} = await refreshAccessToken(req, res)
 
       // Set New Tokens to Cookie
-      setTokensCookies(res, newAccessToken, newRefreshToken, newAccessTokenExp, newRefreshTokenExp)
+      setTokensCookies(res, newAccessToken, newRefreshToken, newAccessTokenExp, newRefreshTokenExp,uid,isauth)
 
       res.status(200).send({
         success: true,
@@ -318,6 +323,7 @@ class UserController {
       res.clearCookie('accessToken');
       res.clearCookie('refreshToken');
       res.clearCookie('is_auth');
+      res.clearCookie('uid');
 
       res.status(200).json({ success: true, message: "Logout successful" });
     } catch (error) {
