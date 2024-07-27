@@ -7,7 +7,7 @@ class postController {
             const { skip: skipString } = req.query;
             const skip = skipString ? Number(skipString) : 0;
             const limit = skip === 0 ? 4 : 3;
-            const posts = await Post.find({}, 'title description image createdAt updatedAt url categories comments likes views tags').populate('author', '_id').populate('comments.author', '_id name avatar').sort({ _id: -1 })
+            const posts = await Post.find({}, 'title description image createdAt updatedAt url categories likes views tags comments').sort({ _id: -1 })
                 .skip(skip)
                 .limit(limit);
             return res.status(200).json(posts);
@@ -22,7 +22,7 @@ class postController {
             if (redisPostCatch && popularPosts.length > 0) {
                 return res.status(200).json(popularPosts);
             }
-            const posts = await Post.find({}, 'title description image createdAt updatedAt url categories comments likes views tags')
+            const posts = await Post.find({}, 'title description image createdAt updatedAt url categories tags')
                 .sort({ views: -1 })
                 .limit(4);
             if (posts.length === 0) {

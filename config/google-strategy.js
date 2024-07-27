@@ -10,7 +10,6 @@ passport.use(new GoogleStrategy({
   callbackURL: "/auth/google/callback"
 },
   async (accessToken, refreshToken, profile, done) => {
-    // console.log("Profile", profile);
     try {
       // Check if user already exists in the database
       let user = await UserModel.findOne({ email: profile._json.email });
@@ -26,6 +25,7 @@ passport.use(new GoogleStrategy({
           email: profile._json.email,
           is_verified: true,
           password: hashedPassword,
+          avatar:{url:profile._json.picture}
         })
       }
       // Generate JWT tokens
