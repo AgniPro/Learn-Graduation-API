@@ -318,8 +318,8 @@ class UserController {
         { token: refreshToken },
         { $set: { blacklisted: true } }
       );
-        res.clearCookie('accessToken', {path: '/',sameSite: 'None' });
-        res.clearCookie('refreshToken', {path: '/',sameSite: 'None' });
+        res.clearCookie('accessToken', {path: '/',sameSite: 'None',secure: true });
+        res.clearCookie('refreshToken', {path: '/',sameSite: 'None',secure: true});
 
       res.status(200).json({ success: true, message: "Logout successful" });
     } catch (error) {
