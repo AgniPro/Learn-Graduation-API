@@ -318,8 +318,8 @@ class UserController {
         { token: refreshToken },
         { $set: { blacklisted: true } }
       );
-        res.clearCookie('accessToken', { domain: 'learngraduation.onrender.com', path: '/',sameSite: 'None' });
-        res.clearCookie('refreshToken', { domain: 'learngraduation.onrender.com', path: '/',sameSite: 'None' });
+        res.clearCookie('accessToken', {path: '/',sameSite: 'None' });
+        res.clearCookie('refreshToken', {path: '/',sameSite: 'None' });
 
       res.status(200).json({ success: true, message: "Logout successful" });
     } catch (error) {
