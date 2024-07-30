@@ -318,10 +318,8 @@ class UserController {
         { token: refreshToken },
         { $set: { blacklisted: true } }
       );
-        res.clearCookie('accessToken', { domain: 'learngraduation.onrender.com', path: '/' });
-        res.clearCookie('refreshToken', { domain: 'learngraduation.onrender.com', path: '/' });
-        res.clearCookie('is_auth', { domain: 'learngraduation.vercel.app', path: '/' });
-        res.clearCookie('uid', { domain: 'learngraduation.vercel.app', path: '/' });
+        res.clearCookie('accessToken', { domain: 'learngraduation.onrender.com', path: '/',sameSite: 'None' });
+        res.clearCookie('refreshToken', { domain: 'learngraduation.onrender.com', path: '/',sameSite: 'None' });
 
       res.status(200).json({ success: true, message: "Logout successful" });
     } catch (error) {
