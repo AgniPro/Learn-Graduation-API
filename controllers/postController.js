@@ -44,7 +44,7 @@ class postController {
 
             const post = new Post({
                 author: req.user._id,
-                url: req.body.url,
+                url: formatUrlForSEO(req.body.url),
                 title: req.body.title,
                 description: req.body.description,
                 image: req.body.image,
@@ -65,23 +65,31 @@ class postController {
         }
     };
 
-    static updatePost = async (req, res, next) => {
+    static updatePost = async (req, res) => {
         try {
+            const postid = req.query.pid;
             let tags = req.body.tags;
             let tagsArray = tags.split(',').map(tag => tag.trim());
             let categories = req.body.categories;
             let categoriesArray = categories.split(',').map(category => category.trim());
-            const uPost = { "content": req.body.content, "description": req.body.description, "title": req.body.title, "image": req.body.image, "categories": categoriesArray, "tags": tagsArray }
-            const postid = req.params.postUrl;
-            Post.findOneAndUpdate({ "url": postid }, { $set: uPost }, { new: true }, (err, doc) => {
-                if (err) {
-                    return res.status(501).json(err);
-                } else {
-                    return res.status(200).json("Post has been updated.");
-                }
-            });
+            const uPost = {
+                'url': req.body.url,
+                'content': req.body.content,
+                'description': req.body.description,
+                'title': req.body.title,
+                'image': req.body.image,
+                'categories': categoriesArray,
+                'tags': tagsArray
+            };
+            // Perform the update
+            const updatedPost = await Post.findOneAndUpdate({ "_id": postid }, { $set: uPost }, { new: true });
+
+            if (!updatedPost) {
+                return res.status(500).json({ success: false, message: "Failed to update post" });
+            }
+            return res.status(200).json({ success: true, message: "Post has been updated." });
         } catch (err) {
-            return next(new ErrorHandler(err.message, 500));
+            return res.status(500).json({ success: false, message: err.message });
         }
     };
     static deletePost = async (req, res, next) => {
@@ -105,16 +113,16 @@ class postController {
             ).populate('author', 'name avatar')
                 .populate({
                     path: 'comments.author',
-                    select: 'name avatar'
+                    select: 'name avatar role'
                 })
-                .lean(); 
+                .lean();
             if (!post) {
                 return res.status(404).json({ success: false, message: "Post not found" });
             }
             const isLiked = post.likes.includes(req.user);
             const responseData = {
                 ...post,
-                isLiked 
+                isLiked
             };
             res.status(200).json(responseData);
         } catch (err) {
@@ -122,7 +130,7 @@ class postController {
             return res.status(500).json({ success: false, message: "An error occurred" });
         }
     }
-   
+
     static searchPost = async (req, res, next) => {
         try {
 
@@ -151,12 +159,12 @@ class postController {
                 { $push: { comments: commentData } },
                 { new: true, timestamps: false }
             ).populate({
-                    path: 'comments.author',
-                    select: 'name avatar'
-                })
-                .lean(); 
+                path: 'comments.author',
+                select: 'name avatar'
+            })
+                .lean();
             if (commentRes) {
-                res.status(200).json({ success: true, message: 'Comment has added', comments:commentRes.comments })
+                res.status(200).json({ success: true, message: 'Comment has added', comments: commentRes.comments })
             } else {
                 res.status(500).json({ success: false, message: 'Something went wrong' })
             }
@@ -182,7 +190,7 @@ class postController {
             Post.updateOne({ _id: postId }, update, { timestamps: false })
                 .then(result => {
                     const message = isLiked ? 'Like has been removed.' : 'Like has been added.';
-              
+
                     res.status(200).json({ success: true, message });
                 })
                 .catch(err => {
@@ -198,6 +206,14 @@ class postController {
 // some functions
 function escapeRegex(text) {
     return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+};
+const formatUrlForSEO = (url) => {
+    return url
+        .trim() // Remove leading and trailing whitespace
+        .toLowerCase() // Convert to lowercase
+        .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+        .replace(/\s+/g, '-') // Replace spaces with hyphens
+        .replace(/-+/g, '-'); // Replace multiple hyphens with a single hyphen
 };
 
 export default postController;

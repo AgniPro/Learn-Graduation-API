@@ -152,12 +152,8 @@ class UserController {
       const { accessToken, refreshToken, accessTokenExp, refreshTokenExp } = await generateTokens(user)
 
       // Set Cookies
-      const uid= user._id.toHexString();
-      let isauth = 2119518;
-      if (user.role==='admin') {
-        isauth=1415914;
-       }
-      setTokensCookies(res, accessToken, refreshToken, accessTokenExp, refreshTokenExp,uid,isauth);
+
+      setTokensCookies(res, accessToken, refreshToken, accessTokenExp, refreshTokenExp);
 
       // Send success response with tokens
       res.status(200).json({
@@ -181,10 +177,10 @@ class UserController {
   static getNewAccessToken = async (req, res) => {
     try {
       // Get new access token using Refresh Token
-      const { newAccessToken, newRefreshToken, newAccessTokenExp, newRefreshTokenExp ,uid,isauth} = await refreshAccessToken(req, res)
+      const { newAccessToken, newRefreshToken, newAccessTokenExp, newRefreshTokenExp} = await refreshAccessToken(req, res)
 
       // Set New Tokens to Cookie
-      setTokensCookies(res, newAccessToken, newRefreshToken, newAccessTokenExp, newRefreshTokenExp,uid,isauth)
+      setTokensCookies(res, newAccessToken, newRefreshToken, newAccessTokenExp, newRefreshTokenExp)
 
       res.status(200).send({
         success: true,
@@ -208,21 +204,27 @@ class UserController {
   // Change Password
   static changeUserPassword = async (req, res) => {
     try {
-      const { password, password_confirmation } = req.body;
+      const { password, newPassword } = req.body;
 
-      // Check if both password and password_confirmation are provided
-      if (!password || !password_confirmation) {
-        return res.status(400).json({ success: false, message: "New Password and Confirm New Password are required" });
+      // Check if both password and newPassword are provided
+      if (!password || !newPassword) {
+        return res.status(400).json({ success: false, message: "Old Password and New Password are required" });
       }
 
-      // Check if password and password_confirmation match
-      if (password !== password_confirmation) {
-        return res.status(400).json({ success: false, message: "New Password and Confirm New Password don't match" });
+      // Check if password and newPassword match
+      if (password === newPassword) {
+        return res.status(400).json({ success: false, message: "Old Password and New password are same" });
       }
-
+      const user = await UserModel.findById(req.user._id).select('+password');
+      
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+        return res.status(401).json({ success: false, message: "Invalid old password" });
+      }
+      
       // Generate salt and hash new password
       const salt = await bcrypt.genSalt(10);
-      const newHashPassword = await bcrypt.hash(password, salt);
+      const newHashPassword = await bcrypt.hash(newPassword, salt);
 
       // Update user's password
       await UserModel.findByIdAndUpdate(req.user._id, { $set: { password: newHashPassword } });
@@ -309,25 +311,25 @@ class UserController {
     }
   }
 
-  // Logout
-  static userLogout = async (req, res) => {
-    try {
-      // Optionally, you can blacklist the refresh token in the database
-      const refreshToken = req.cookies.refreshToken;
-      await UserRefreshTokenModel.findOneAndUpdate(
-        { token: refreshToken },
-        { $set: { blacklisted: true } }
-      );
-        res.clearCookie('accessToken', {path: '/',sameSite: 'None',secure: true });
-        res.clearCookie('refreshToken', {path: '/',sameSite: 'None',secure: true});
+// Logout
+static userLogout = async (req, res) => {
+  try {
+    // Optionally, you can blacklist the refresh token in the database
+    const refreshToken = req.cookies.refreshToken;
+    await UserRefreshTokenModel.findOneAndUpdate(
+      { token: refreshToken },
+      { $set: { blacklisted: true } }
+    );
+    res.clearCookie('accessToken', {path: '/',sameSite: 'None',secure: true });
+    res.clearCookie('refreshToken', {path: '/',sameSite: 'None',secure: true});
 
-      res.status(200).json({ success: true, message: "Logout successful" });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ success: false, message: "Unable to logout, please try again later" });
-    }
-
+    res.status(200).json({ success: true, message: "Logout successful" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Unable to logout, please try again later" });
   }
+
+}
   // Update user info
   static updateUserInfo = async (req, res, next) => {
     try {
@@ -346,7 +348,6 @@ class UserController {
       res.status(200).json({
         success: true,
         message: "User information updated",
-        userData,
       });
     }
     catch (error) {
@@ -391,7 +392,6 @@ class UserController {
       res.status(200).json({
         message: "Profile picture updated successfully",
         success: true,
-        userData,
       });
     } catch (error) {
       return res.status(500).json({ success: false, message: "Unable to update profile picture" });
