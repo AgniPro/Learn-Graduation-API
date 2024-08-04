@@ -12,7 +12,7 @@ router.post('/reset-password/:id/:token', UserController.userPasswordReset)
 
 // Protected Routes
 router.get('/me',isAuthenticated, UserController.userProfile)
-router.post('/change-password',isAuthenticated, UserController.changeUserPassword)
+router.put('/change-password',isAuthenticated, UserController.changeUserPassword)
 router.post('/logout', isAuthenticated, UserController.userLogout)
 router.put("/update-user-info",isAuthenticated,UserController.updateUserInfo);
 router.put("/update-user-avatar",isAuthenticated,UserController.updateProfilePicture);
