@@ -254,7 +254,7 @@ class UserController {
       const secret = user._id + process.env.JWT_ACCESS_TOKEN_SECRET_KEY;
       const token = jwt.sign({ userID: user._id }, secret, { expiresIn: '5m' });
       // Reset Link
-      const resetLink = `${process.env.FRONTEND_HOST}/account/reset-password-confirm/${user._id}/${token}`;
+      const resetLink = `${process.env.FRONTEND_HOST}?i=${user._id}&t=${token}`;
       // Send password reset email  
 
       const data = { user: { name: user.name }, resetLink };
@@ -400,14 +400,14 @@ static userLogout = async (req, res) => {
 // get all users
 static getAllUsers = async (req, res, next) => {
   try {
-    const users = await UserModel.find().short({ createdAt: -1 });
+    const users = await UserModel.find({ _id: { $ne: req.user._id } }).sort({ updatedAt: -1 });
     res.status(200).json({
       success: true,
       message: "All users",
       users,
     });
   } catch (error) {
-    return res.status(500).json({ success: false, message: "Unable to get all users" });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 // update user role

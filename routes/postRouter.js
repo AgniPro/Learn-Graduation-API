@@ -12,5 +12,5 @@ postRouter.put('/update-post', isAuthenticated,authorizeRole("admin"), postContr
 postRouter.delete('/delete-post', isAuthenticated,authorizeRole("admin"), postController.deletePost);
 postRouter.put('/p/:postId/comment', isAuthenticated, postController.postComment);
 postRouter.put('/p/:postId/like', isAuthenticated, postController.postLike);
-
+postRouter.delete('/p/:postId/comment/:commentId', postController.deleteComment);
 export default postRouter;

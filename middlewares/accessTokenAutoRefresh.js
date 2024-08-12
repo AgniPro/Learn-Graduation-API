@@ -19,7 +19,7 @@ const accessTokenAutoRefresh = async (req, res, next) => {
     const refreshToken = req.cookies.refreshToken;
     if (!refreshToken) {
       // If refresh token is also missing, throw an error
-      throw new Error('Refresh token is missing');
+      return res.status(401).json({ error: 'Unauthorized', message: 'Session Expired' });
     }
 
     // Access token is expired, make a refresh token request
@@ -32,9 +32,9 @@ const accessTokenAutoRefresh = async (req, res, next) => {
     req.headers['authorization'] = `Bearer ${newAccessToken}`;
     next();
   } catch (error) {
-    console.error('User was unauthorized:', error.message);
-    // Handle the error, such as returning an error response or redirecting to the login page
-    res.status(401).json({ error: 'Unauthorized', message: 'Access token is missing or invalid' });
+    if (!res.headersSent) {
+      return res.status(401).json({ error: 'Unauthorized', message: 'Access token is missing or invalid' });
+    }
   }
 };
 

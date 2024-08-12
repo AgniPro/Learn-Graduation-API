@@ -21,12 +21,11 @@ const generateTokens = async (user) => {
     );
 
     const userRefreshToken = await UserRefreshTokenModel.findOneAndDelete({ userId: user._id });
-
     // Save New Refresh Token
     await new UserRefreshTokenModel({ userId: user._id, token: refreshToken }).save();
-
     return Promise.resolve({ accessToken, refreshToken, accessTokenExp, refreshTokenExp });
   } catch (error) {
+    console.error("Error generating tokens", error);
     return Promise.reject(error);
   }
 }

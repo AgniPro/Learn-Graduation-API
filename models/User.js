@@ -48,8 +48,11 @@ const userSchema = new mongoose.Schema(
         courseID: String,
       },
     ],
+    lastActive: {
+      type: Date,
+    },
   },
-  { timestamps: true }
+  { timestamps: true}
 );
 
 const UserModel = mongoose.model("user", userSchema)

@@ -94,15 +94,17 @@ class postController {
     };
     static deletePost = async (req, res, next) => {
         try {
-            const postid = req.params.postUrl;
-            const post = await Post.findOneAndDelete({ "url": postid });
+            const psId = req.query.pId;
+            const post = await Post.findOneAndDelete({ "_id": psId });
+            console.log(psId);
+            if (!post) {
+                return res.status(404).json("Post not found.");
+            }
             res.status(200).json("Post has been deleted.");
-        }
-        catch (err) {
-            return next(new ErrorHandler(err.message, 500));
+        } catch (err) {
+            return res.status(500).json({ success: false, message: err.message });
         }
     }
-
     static getPost = async (req, res, next) => {
         try {
             const postid = req.params.postID;
@@ -170,6 +172,29 @@ class postController {
             }
         }
         catch (err) {
+            return next(new ErrorHandler(err.message, 500));
+        }
+    }
+    // comment deletion
+    static deleteComment = async (req, res, next) => {
+        try {
+            const { postId, commentId } = req.params;
+
+            const post = await Post.findOneAndUpdate(
+                { _id: postId },
+                { $pull: { comments: { _id: commentId } } },
+                { new: true, timestamps: false }
+            ).populate({
+                path: 'comments.author',
+                select: 'name avatar'
+            }).lean();
+
+            if (post) {
+                res.status(200).json({ success: true, message: 'Comment has been deleted', comments: post.comments });
+            } else {
+                res.status(404).json({ success: false, message: 'Post or comment not found' });
+            }
+        } catch (err) {
             return next(new ErrorHandler(err.message, 500));
         }
     }

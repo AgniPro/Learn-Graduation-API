@@ -50,12 +50,7 @@ app.get('/auth/google/callback',
 
     // Access user object and tokens from req.user
     const { user, accessToken, refreshToken, accessTokenExp, refreshTokenExp } = req.user;
-    const uid = user._id.toHexString();
-    let isauth = 2119518;
-      if (user.role==='admin') {
-        isauth=1415914;
-       }
-    setTokensCookies(res, accessToken, refreshToken, accessTokenExp, refreshTokenExp,uid,isauth);
+    setTokensCookies(res, accessToken, refreshToken, accessTokenExp, refreshTokenExp);
 
     // Successful authentication, redirect home.
     res.redirect(`${process.env.FRONTEND_HOST}`);
