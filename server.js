@@ -39,7 +39,7 @@ app.use(cookieParser())
 // Load Routes
 // Redirect root to frontend host
 app.get('/', (req, res) => {
-  res.redirect(`${process.env.FRONTEND_HOST}`);
+  res.send({'Hello World!'});
 });
 app.use("/api/user", userRoutes);
 app.use("/api",postRouter);
