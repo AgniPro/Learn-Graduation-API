@@ -37,9 +37,10 @@ app.use(passport.initialize());
 app.use(cookieParser())
 
 // Load Routes
+// Redirect root to frontend host
 app.get('/', (req, res) => {
-  res.send({success:true,message:'Hello World!'})
-})
+  res.redirect(`${process.env.FRONTEND_HOST}`);
+});
 app.use("/api/user", userRoutes);
 app.use("/api",postRouter);
 
