@@ -37,6 +37,9 @@ app.use(passport.initialize());
 app.use(cookieParser())
 
 // Load Routes
+app.get('/', (req, res) => {
+  res.send('Hello World!')
+})
 app.use("/api/user", userRoutes);
 app.use("/api",postRouter);
 
