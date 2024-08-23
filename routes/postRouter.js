@@ -11,6 +11,9 @@ postRouter.post('/create-post', isAuthenticated,authorizeRole("admin"), postCont
 postRouter.put('/update-post', isAuthenticated,authorizeRole("admin"), postController.updatePost);
 postRouter.delete('/delete-post', isAuthenticated,authorizeRole("admin"), postController.deletePost);
 postRouter.put('/p/:postId/comment', isAuthenticated, postController.postComment);
+postRouter.put('/p/:postId/comment/:commentId/reply',isAuthenticated, postController.replyToComment);
+postRouter.delete('/p/:postId/comment/:commentId',isAuthenticated, postController.deleteComment);
+postRouter.delete('/p/:postId/comment/:commentId/reply/:replyId',isAuthenticated, postController.deleteReply);
 postRouter.put('/p/:postId/like', isAuthenticated, postController.postLike);
-postRouter.delete('/p/:postId/comment/:commentId', postController.deleteComment);
+
 export default postRouter;

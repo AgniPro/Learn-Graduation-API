@@ -14,9 +14,6 @@ import postRouter from "./routes/postRouter.js";
 const app = express();
 const port = process.env.PORT;
 const DATABASE_URL = process.env.DATABASE_URL;
-if (!DATABASE_URL) {
-  console.error('DATABASE_URL is not defined');
-}
 // This will solve CORS Policy Error
 const corsOptions = {
   // set origin to a specific origin.

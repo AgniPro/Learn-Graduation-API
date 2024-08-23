@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { Schema } from 'mongoose';
 
-const CommentSchema = new Schema({
+const ReplySchema = new Schema({
   author: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'user',
@@ -12,6 +12,20 @@ const CommentSchema = new Schema({
     required: true,
     trim: true,
   }
+}, { timestamps: true });
+
+const CommentSchema = new Schema({
+  author: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'user',
+    required: true
+  },
+  content: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  replies: [ReplySchema]
 }, { timestamps: true });
 
 const postSchema = new Schema({
@@ -57,5 +71,5 @@ const postSchema = new Schema({
   views: { type: Number, default: 0 }
 }, { timestamps: true });
 
-const Post = new mongoose.model("Post", postSchema);
+const Post = mongoose.model("Post", postSchema);
 export default Post;

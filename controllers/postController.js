@@ -4,9 +4,12 @@ import ErrorHandler from "../utils/ErrorHandler.js";
 class postController {
     static getPosts = async (req, res, next) => {
         try {
-            const { skip: skipString } = req.query;
+            const { skip: skipString ,limit:limitReq} = req.query;
             const skip = skipString ? Number(skipString) : 0;
-            const limit = skip === 0 ? 4 : 3;
+            let limit = skip === 0 ? 4 : 3;
+            if (limitReq!==undefined && limitReq>0) {
+                limit = Number(limitReq);
+            }
             const posts = await Post.find({}, 'title description image createdAt updatedAt url categories likes views tags comments').sort({ _id: -1 })
                 .skip(skip)
                 .limit(limit);
@@ -114,7 +117,7 @@ class postController {
                 { new: true, timestamps: false }
             ).populate('author', 'name avatar')
                 .populate({
-                    path: 'comments.author',
+                    path: 'comments.author comments.replies.author',
                     select: 'name avatar role'
                 })
                 .lean();
@@ -142,10 +145,12 @@ class postController {
                 .sort({ _id: -1 })
                 .skip(skip)
                 .limit(6);
+            if (posts.length === 0) {
+                return res.status(404).json({success:false, message: "No post found" });
+            }
             res.status(200).json(posts);
-
         } catch (err) {
-            return next(new ErrorHandler(err.message, 500));
+            return res.status(500).json({ success: false, message: err.message });
         }
     };
     // comment
@@ -161,7 +166,7 @@ class postController {
                 { $push: { comments: commentData } },
                 { new: true, timestamps: false }
             ).populate({
-                path: 'comments.author',
+                path: 'comments.author comments.replies.author',
                 select: 'name avatar'
             })
                 .lean();
@@ -175,6 +180,33 @@ class postController {
             return next(new ErrorHandler(err.message, 500));
         }
     }
+   // reply to comment
+   static replyToComment = async (req, res, next) => {
+    try {
+        const replyContent = req.body.content;
+        if (!replyContent) {
+            return res.status(500).json('Please write something to reply');
+        }
+        const replyData = { content: replyContent, author: req.user._id };
+
+        const commentRes = await Post.findOneAndUpdate(
+            { _id: req.params.postId, 'comments._id': req.params.commentId },
+            { $push: { 'comments.$.replies': replyData } },
+            { new: true, timestamps: false }
+        ).populate({
+            path: 'comments.author comments.replies.author',
+            select: 'name avatar'
+        }).lean();
+
+        if (!commentRes) {
+            return res.status(404).json({ success: false, message: 'Comment not found' });
+        }
+
+        res.status(200).json({ success: true, message: 'Reply has been added', comments: commentRes.comments });
+    } catch (err) {
+        return next(new ErrorHandler(err.message, 500));
+    }
+}
     // comment deletion
     static deleteComment = async (req, res, next) => {
         try {
@@ -185,7 +217,7 @@ class postController {
                 { $pull: { comments: { _id: commentId } } },
                 { new: true, timestamps: false }
             ).populate({
-                path: 'comments.author',
+                path: 'comments.author comments.replies.author',
                 select: 'name avatar'
             }).lean();
 
@@ -193,6 +225,29 @@ class postController {
                 res.status(200).json({ success: true, message: 'Comment has been deleted', comments: post.comments });
             } else {
                 res.status(404).json({ success: false, message: 'Post or comment not found' });
+            }
+        } catch (err) {
+            return next(new ErrorHandler(err.message, 500));
+        }
+    }
+    // delete comment reply
+    static deleteReply = async (req, res, next) => {
+        try {
+            const { postId, commentId, replyId } = req.params;
+    
+            const post = await Post.findOneAndUpdate(
+                { _id: postId, 'comments._id': commentId },
+                { $pull: { 'comments.$.replies': { _id: replyId } } },
+                { new: true, timestamps: false }
+            ).populate({
+                path: 'comments.author comments.replies.author',
+                select: 'name avatar'
+            }).lean();
+    
+            if (post) {
+                res.status(200).json({ success: true, message: 'Reply has been deleted', comments: post.comments });
+            } else {
+                res.status(404).json({ success: false, message: 'Post, comment, or reply not found' });
             }
         } catch (err) {
             return next(new ErrorHandler(err.message, 500));
